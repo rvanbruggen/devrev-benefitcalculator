@@ -150,6 +150,35 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
 .disclaimer-side.right{right:0;transform:translateY(-50%);border-radius:0 0 6px 6px}
 .version-tag{margin-top:10px;text-align:right;font-size:10px;color:var(--hi);font-weight:600;letter-spacing:.04em}
 
+.mode-bar{display:flex;justify-content:center;gap:0;margin-bottom:.9rem;padding:0 .25rem}
+.mode-toggle{display:inline-flex;border:1.5px solid var(--bd);border-radius:8px;overflow:hidden;background:#fff}
+.mode-toggle button{border:none;background:none;padding:8px 22px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:var(--mu);cursor:pointer;transition:all .15s;letter-spacing:.02em;position:relative}
+.mode-toggle button.active{background:var(--pur);color:#fff}
+.mode-toggle button:not(.active):hover{background:var(--pur-bg);color:var(--pur)}
+
+.wz-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:8000;pointer-events:none;opacity:0;transition:opacity .3s}
+.wz-overlay.active{opacity:1}
+.wz-highlight{position:relative;z-index:8001;border-radius:12px;box-shadow:0 0 0 6px rgba(136,84,246,.3);transition:box-shadow .3s}
+.wz-panel{position:fixed;bottom:28px;right:28px;width:360px;background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.25);z-index:8002;padding:22px 26px;font-family:Inter,sans-serif;opacity:0;transform:translateY(20px);transition:opacity .3s,transform .3s;pointer-events:auto}
+.wz-panel.active{opacity:1;transform:translateY(0)}
+.wz-panel .wz-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:18px;color:var(--hi);cursor:pointer;padding:4px;line-height:1}
+.wz-panel .wz-close:hover{color:var(--tx)}
+.wz-panel .wz-step-label{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px}
+.wz-panel .wz-title{font-size:17px;font-weight:700;color:var(--tx);margin-bottom:8px;line-height:1.25}
+.wz-panel .wz-desc{font-size:13px;color:var(--mu);line-height:1.55;margin-bottom:18px}
+.wz-progress{height:4px;background:var(--bd);border-radius:2px;margin-bottom:18px;overflow:hidden}
+.wz-progress-fill{height:100%;background:var(--pur);border-radius:2px;transition:width .35s ease}
+.wz-nav{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.wz-btn{border:1.5px solid var(--pur);background:var(--pur);color:#fff;border-radius:8px;padding:8px 22px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.02em}
+.wz-btn:hover{background:#7547e6;border-color:#7547e6}
+.wz-btn.sec{background:#fff;color:var(--pur)}
+.wz-btn.sec:hover{background:var(--pur-bg)}
+.wz-btn:disabled{opacity:.3;cursor:default;pointer-events:none}
+.wz-dots{display:flex;gap:6px;align-items:center}
+.wz-dot{width:8px;height:8px;border-radius:50%;background:var(--bd);transition:background .25s,transform .25s}
+.wz-dot.active{background:var(--pur);transform:scale(1.25)}
+.wz-dot.done{background:var(--grn)}
+
 @media(max-width:760px){
   .hero{padding:1.5rem 1.5rem}
   .hero h1{font-size:2rem}
@@ -166,7 +195,7 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
   @page{size:A4;margin:12mm 14mm}
   body{background:#fff!important;font-size:11px}
   .page{max-width:100%;padding:0}
-  .controls,.export-group{display:none!important}
+  .controls,.export-group,.mode-bar,.wz-overlay,.wz-panel{display:none!important}
   .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact;margin-bottom:.4rem;padding:1.1rem 1.4rem;border-radius:10px}
   .hero h1{font-size:1.8rem}
   .hero::after{opacity:.5}
@@ -203,6 +232,13 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
   <div class="print-meta">
     <span>Prepared for <strong id="print-company">—</strong></span>
     <span id="print-date"></span>
+  </div>
+
+  <div class="mode-bar">
+    <div class="mode-toggle">
+      <button class="active" id="mode-manual">Manual Mode</button>
+      <button id="mode-wizard">Guided Wizard</button>
+    </div>
   </div>
 
   <div class="controls">
@@ -500,12 +536,26 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
       <li><strong>NPS</strong>: treats incremental retention + referral revenue as a recurring annual cash flow, discounted over the horizon.</li>
       <li><strong>AI centralization</strong>: compares annual run-rate of a fragmented AI stack against a single DevRev subscription for the same population.</li>
     </ul>
-    <div class="version-tag">v0.2.0</div>
+    <div class="version-tag">v0.3.0</div>
   </div>
 
 </div>
 
 <div class="disclaimer-bar disclaimer-bottom">This calculator is a <strong>personal project</strong> by Rik Van Bruggen. It is not endorsed by, affiliated with, or supported by DevRev, Inc. All estimates are illustrative only and should not be treated as guarantees.</div>
+
+<div class="wz-overlay" id="wz-overlay"></div>
+<div class="wz-panel" id="wz-panel">
+  <button class="wz-close" id="wz-close" title="Exit wizard">✕</button>
+  <div class="wz-step-label" id="wz-step-label"></div>
+  <div class="wz-title" id="wz-title"></div>
+  <div class="wz-desc" id="wz-desc"></div>
+  <div class="wz-progress"><div class="wz-progress-fill" id="wz-progress-fill"></div></div>
+  <div class="wz-nav">
+    <button class="wz-btn sec" id="wz-back">← Back</button>
+    <div class="wz-dots" id="wz-dots"></div>
+    <button class="wz-btn" id="wz-next">Next →</button>
+  </div>
+</div>
 
 <script>
   let currency = '€';
@@ -1136,7 +1186,7 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
     md += `- **NPV calculation:** All future cash flows are discounted at ${pct(discountRate,1)} per year. Year 1 is discounted by (1+r), Year 2 by (1+r)², Year 3 by (1+r)³.\n`;
     md += `- **Conservative approach:** Automation rates and adoption percentages are phased over three years to reflect realistic rollout timelines.\n`;
     md += `- **Customizable inputs:** All assumptions used in this analysis are adjustable. The figures above reflect the specific parameters chosen for ${company}.\n`;
-    md += `- This analysis was generated using the DevRev Benefits Calculator v0.2.0, a personal project by Rik Van Bruggen.\n`;
+    md += `- This analysis was generated using the DevRev Benefits Calculator v0.3.0, a personal project by Rik Van Bruggen.\n`;
 
     navigator.clipboard.writeText(md).then(() => {
       showToast('✓ Markdown copied to clipboard');
@@ -1147,6 +1197,178 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
 
   document.getElementById('btn-xlsx').addEventListener('click', exportXLSX);
   document.getElementById('btn-md').addEventListener('click', exportMarkdown);
+
+  // ── Guided Wizard ──
+  const wzSteps = [
+    {
+      title: 'Welcome',
+      desc: 'This wizard will guide you through the DevRev Benefits Calculator step by step. We\'ll collect your company details, choose which benefit areas to analyze, and fill in the assumptions for each.',
+      target: '.hero',
+    },
+    {
+      title: 'Company & Settings',
+      desc: 'Enter your company name, select your preferred currency, and set the NPV discount rate. These settings apply to all calculations.',
+      target: '.controls',
+    },
+    {
+      title: 'Select Benefit Categories',
+      desc: 'Choose which benefit areas to include in your analysis. Click a card to toggle it on or off. Disabled categories won\'t appear in the totals or exports.',
+      target: '.gg',
+    },
+    {
+      title: 'Support — Case Automation',
+      desc: 'Model the FTE savings from automating support cases with DevRev. Enter your current case volume, growth rate, staffing costs, and the expected automation percentages over three years.',
+      target: '#mod-support',
+      module: 'support',
+    },
+    {
+      title: 'Enterprise Search',
+      desc: 'Quantify the productivity, collaboration, and decision-quality gains from unified enterprise search. Enter your workforce details, current search habits, and expected adoption rates.',
+      target: '#mod-search',
+      module: 'search',
+    },
+    {
+      title: 'Customer Satisfaction',
+      desc: 'Estimate the revenue impact of NPS improvement through better customer experience. Enter your customer base metrics, current and target NPS, and sensitivity assumptions.',
+      target: '#mod-nps',
+      module: 'nps',
+    },
+    {
+      title: 'AI Centralization',
+      desc: 'Compare the cost of your current fragmented AI tool stack against a consolidated DevRev platform. Enter pricing and quantities for each tool you currently use.',
+      target: '#mod-ai',
+      module: 'ai',
+    },
+    {
+      title: 'Your Results',
+      desc: 'Your benefits analysis is complete! Review the summary below. You can export the results using the PDF, XL, and MD buttons above, or scroll down to see detailed breakdowns for each category.',
+      target: '.fb',
+    },
+  ];
+
+  let wzCurrent = 0;
+  let wzActive = false;
+  let wzHighlighted = null;
+
+  function wzVisibleSteps() {
+    return wzSteps.filter(s => !s.module || enabled[s.module]);
+  }
+
+  function wzRenderDots() {
+    const dots = document.getElementById('wz-dots');
+    const steps = wzVisibleSteps();
+    dots.innerHTML = steps.map((_, i) =>
+      `<div class="wz-dot${i < wzCurrent ? ' done' : ''}${i === wzCurrent ? ' active' : ''}"></div>`
+    ).join('');
+  }
+
+  function wzGoTo(idx) {
+    const steps = wzVisibleSteps();
+    if (idx < 0 || idx >= steps.length) return;
+    wzCurrent = idx;
+    const step = steps[idx];
+
+    // Update panel content
+    document.getElementById('wz-step-label').textContent = `Step ${idx + 1} of ${steps.length}`;
+    document.getElementById('wz-title').textContent = step.title;
+    document.getElementById('wz-desc').textContent = step.desc;
+    document.getElementById('wz-progress-fill').style.width = ((idx + 1) / steps.length * 100) + '%';
+
+    // Nav buttons
+    const backBtn = document.getElementById('wz-back');
+    const nextBtn = document.getElementById('wz-next');
+    backBtn.disabled = idx === 0;
+    if (idx === steps.length - 1) {
+      nextBtn.textContent = 'Finish ✓';
+    } else {
+      nextBtn.textContent = 'Next →';
+    }
+
+    wzRenderDots();
+
+    // Highlight target
+    if (wzHighlighted) wzHighlighted.classList.remove('wz-highlight');
+    const target = document.querySelector(step.target);
+    if (target) {
+      target.classList.add('wz-highlight');
+      wzHighlighted = target;
+      // If module card is disabled, still show it temporarily for the wizard
+      if (step.module && !enabled[step.module]) {
+        target.classList.remove('off');
+      }
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    }
+  }
+
+  function wzStart() {
+    wzActive = true;
+    wzCurrent = 0;
+    document.getElementById('wz-overlay').classList.add('active');
+    document.getElementById('wz-panel').classList.add('active');
+    document.body.style.overflow = '';
+    wzGoTo(0);
+  }
+
+  function wzEnd() {
+    wzActive = false;
+    document.getElementById('wz-overlay').classList.remove('active');
+    document.getElementById('wz-panel').classList.remove('active');
+    if (wzHighlighted) {
+      wzHighlighted.classList.remove('wz-highlight');
+      wzHighlighted = null;
+    }
+    applyToggles();
+    recompute();
+  }
+
+  function setModeUI(mode) {
+    document.getElementById('mode-manual').classList.toggle('active', mode === 'manual');
+    document.getElementById('mode-wizard').classList.toggle('active', mode === 'wizard');
+  }
+
+  document.getElementById('mode-wizard').addEventListener('click', () => {
+    setModeUI('wizard');
+    wzStart();
+  });
+  document.getElementById('mode-manual').addEventListener('click', () => {
+    if (wzActive) wzEnd();
+    setModeUI('manual');
+  });
+  document.getElementById('wz-close').addEventListener('click', () => {
+    wzEnd();
+    setModeUI('manual');
+  });
+  document.getElementById('wz-back').addEventListener('click', () => wzGoTo(wzCurrent - 1));
+  document.getElementById('wz-next').addEventListener('click', () => {
+    const steps = wzVisibleSteps();
+    if (wzCurrent >= steps.length - 1) {
+      wzEnd();
+      setModeUI('manual');
+    } else {
+      wzGoTo(wzCurrent + 1);
+    }
+  });
+
+  // Allow keyboard navigation in wizard
+  document.addEventListener('keydown', (ev) => {
+    if (!wzActive) return;
+    if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'SELECT') return;
+    if (ev.key === 'ArrowRight' || ev.key === 'Enter') {
+      ev.preventDefault();
+      const steps = wzVisibleSteps();
+      if (wzCurrent >= steps.length - 1) { wzEnd(); setModeUI('manual'); }
+      else wzGoTo(wzCurrent + 1);
+    } else if (ev.key === 'ArrowLeft') {
+      ev.preventDefault();
+      wzGoTo(wzCurrent - 1);
+    } else if (ev.key === 'Escape') {
+      ev.preventDefault();
+      wzEnd();
+      setModeUI('manual');
+    }
+  });
 
   currency = document.getElementById('currency-select').value;
   discountRate = (parseFloat(document.getElementById('discount-rate').value) || 0) / 100;
