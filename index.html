@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DevRev Benefits Calculator</title>
+<style>
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
+:root{--lime:#ffe600;--lime-bg:#fffbe0;--lime-bd:#ffe60073;--lime-dark:#a08c00;--pur:#8854f6;--pur-bg:#f3eeff;--pur-bd:#8854f647;--grn:#549a08;--grn-bg:#eef6e0;--grn-bd:#549a0847;--org:#ff893a;--org-bg:#fff2ea;--org-bd:#ff893a47;--blu:#002aa6;--blu-bg:#e6eaff;--blu-bd:#002aa633;--sur:#f7f7f8;--bd:#00000014;--bhi:#00000026;--tx:#111116;--mu:#555560;--hi:#9999a8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{color:var(--tx);background:#f0f0f3;min-height:100vh;font-family:Inter,sans-serif;font-size:14px}
+.page{max-width:920px;margin:0 auto;padding:1.5rem 1.5rem 5rem}
+.hero{background:var(--lime);border-radius:14px;padding:2.2rem 2.5rem;margin-bottom:.9rem;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:0;top:0;width:38%;height:100%;background-image:radial-gradient(circle,rgba(0,0,0,.13) 1.4px,transparent 1.9px);background-size:16px 16px;pointer-events:none}
+.hero h1{font-size:3rem;line-height:1.05;font-weight:800;letter-spacing:-.02em;position:relative;z-index:1;margin:0;font-family:Inter,sans-serif}
+.hero h1 .l1{color:var(--pur);display:block}
+.hero h1 .l2{color:#fff;display:block}
+.controls{display:flex;justify-content:flex-end;gap:14px;margin-bottom:1rem;flex-wrap:wrap;padding:0 .25rem;align-items:flex-end}
+.btn-print{border:1.5px solid var(--pur);background:var(--pur);color:#fff;border-radius:8px;padding:8px 16px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:all .15s;height:33px;white-space:nowrap}
+.btn-print:hover{background:#7547e6;border-color:#7547e6}
+.btn-print:active{transform:translateY(1px)}
+.print-meta{display:none}
+.tb-field{display:flex;flex-direction:column;gap:3px}
+.tb-field label{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.tb-field input,.tb-field select{border:1.5px solid var(--bd);background:#fff;border-radius:8px;padding:6px 10px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);min-width:140px}
+.tb-field input:focus,.tb-field select:focus{border-color:var(--pur);outline:none}
+.tb-field input[type=number]{max-width:100px;min-width:80px}
+.selector-label{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px;padding-left:2px}
+
+.card{border:1px solid var(--bd);background:#fff;border-radius:12px;margin-bottom:.9rem;padding:1.2rem 1.5rem}
+.card.c-lime{border-top:3px solid var(--lime)}
+.card.c-pur{border-top:3px solid var(--pur)}
+.card.c-grn{border-top:3px solid var(--grn)}
+.card.c-org{border-top:3px solid var(--org)}
+.card.c-blu{border-top:3px solid var(--blu)}
+.sthdr{justify-content:space-between;align-items:flex-start;margin-bottom:.9rem;display:flex;flex-wrap:wrap;gap:8px}
+.sttitle{color:var(--hi);text-transform:uppercase;letter-spacing:.1em;font-size:10px;font-weight:700}
+.sttitle-big{color:var(--tx);font-size:14px;font-weight:700;letter-spacing:-.01em;margin-top:2px}
+.st-right{display:flex;gap:18px;align-items:baseline}
+.st-right .stv{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.st-right .stv.pur{color:var(--pur)}
+.st-right .stv.grn{color:var(--grn)}
+.st-right .stv.org{color:#b85a00}
+.st-right .stv.blu{color:var(--blu)}
+.st-right .stl{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-right:6px}
+
+.ib{flex-direction:column;gap:4px;display:flex}
+.il{color:var(--mu);font-size:12px;font-weight:500}
+.il .hint{color:var(--hi);font-size:10px;font-weight:400;display:block}
+input[type=number]{border:1.5px solid var(--bd);color:var(--tx);-moz-appearance:textfield;background:#fff;border-radius:8px;padding:8px 11px;font-family:Inter,sans-serif;font-size:13px;transition:border .15s;width:100%}
+input[type=number]:focus{border-color:var(--pur);outline:none}
+.ig2{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;display:grid}
+.ig3{grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;display:grid}
+
+.group-label{color:var(--hi);text-transform:uppercase;letter-spacing:.06em;font-size:10px;font-weight:700;margin:14px 0 6px;border-top:1px dashed var(--bd);padding-top:10px}
+.group-label:first-child{margin-top:0;border-top:none;padding-top:0}
+
+.bt{border-collapse:collapse;table-layout:fixed;width:100%;font-size:12px}
+.bt thead td{color:var(--hi);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bhi);padding:4px 6px;font-size:10px;font-weight:700}
+.bt thead td.rv{text-align:right}
+.bt tbody tr{border-top:1px solid var(--bd)}
+.bt tbody tr:first-child{border-top:none}
+.bt tbody td{color:var(--mu);vertical-align:middle;padding:6px}
+.bt tbody td.rv{text-align:right;color:var(--tx);font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.bt tfoot tr{border-top:1.5px solid var(--bhi)}
+.bt tfoot td{color:var(--tx);padding:7px 6px;font-size:13px;font-weight:700}
+.bt tfoot td.rv{text-align:right;color:var(--pur);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.callout{background:var(--pur-bg);border:1px solid var(--pur-bd);border-radius:8px;padding:10px 13px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.callout.grn{background:var(--grn-bg);border-color:var(--grn-bd)}
+.callout.org{background:var(--org-bg);border-color:var(--org-bd)}
+.callout.blu{background:var(--blu-bg);border-color:var(--blu-bd)}
+.callout .cl-lbl{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.callout .cl-val{font-size:16px;font-weight:700;color:var(--pur);font-variant-numeric:tabular-nums}
+.callout.grn .cl-val{color:var(--grn)}
+.callout.org .cl-val{color:#b85a00}
+.callout.blu .cl-val{color:var(--blu)}
+
+.gg{grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:1rem;display:grid}
+.gc{border:1px solid;border-radius:9px;padding:12px 14px;cursor:pointer;-webkit-user-select:none;user-select:none;transition:transform .12s,opacity .15s,filter .15s;position:relative}
+.gc:hover{transform:translateY(-1px)}
+.gc:active{transform:translateY(0)}
+.gc.off{filter:grayscale(1);opacity:.4;background:var(--sur)!important;border-color:var(--bd)!important}
+.gc.off .gl,.gc.off .gv,.gc.off .gsub{color:var(--hi)!important}
+.gc .tgl{position:absolute;top:9px;right:11px;width:14px;height:14px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:#fff;border:1.5px solid currentColor}
+.gc.off .tgl{background:var(--sur);border-color:var(--hi);color:var(--hi)}
+.gc .tgl::after{content:"✓";color:currentColor;line-height:1}
+.gc.off .tgl::after{content:""}
+.card.off{opacity:.45;filter:grayscale(.85);transition:opacity .15s,filter .15s}
+.card.off input{pointer-events:none}
+.gc.c-pur{background:var(--pur-bg);border-color:var(--pur-bd)}
+.gc.c-grn{background:var(--grn-bg);border-color:var(--grn-bd)}
+.gc.c-org{background:var(--org-bg);border-color:var(--org-bd)}
+.gc.c-lime{background:var(--lime-bg);border-color:var(--lime-bd)}
+.gc.c-blu{background:var(--blu-bg);border-color:var(--blu-bd)}
+.gl{text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;font-size:10px;font-weight:700}
+.gc.c-pur .gl{color:var(--pur)}
+.gc.c-grn .gl{color:var(--grn)}
+.gc.c-org .gl{color:#b85a00}
+.gc.c-lime .gl{color:var(--lime-dark)}
+.gc.c-blu .gl{color:var(--blu)}
+.gv{font-variant-numeric:tabular-nums;font-size:17px;font-weight:700}
+.gc.c-pur .gv{color:var(--pur)}
+.gc.c-grn .gv{color:var(--grn)}
+.gc.c-org .gv{color:#b85a00}
+.gc.c-lime .gv{color:var(--lime-dark)}
+.gc.c-blu .gv{color:var(--blu)}
+.gsub{opacity:.7;margin-top:2px;font-size:11px}
+.gc.c-pur .gsub{color:var(--pur)}
+.gc.c-grn .gsub{color:var(--grn)}
+.gc.c-org .gsub{color:#b85a00}
+.gc.c-lime .gsub{color:var(--lime-dark)}
+.gc.c-blu .gsub{color:var(--blu)}
+
+.fb{border:2px solid var(--lime);background:var(--lime-bg);border-radius:13px;padding:1.4rem 1.5rem;margin-bottom:1rem}
+.fb-row{display:flex;gap:3rem;align-items:flex-start;flex-wrap:wrap}
+.fb-col{flex:1;min-width:200px}
+.fb-lbl{color:var(--lime-dark);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-size:10px;font-weight:700}
+.fb-val{color:var(--lime-dark);letter-spacing:-.02em;font-variant-numeric:tabular-nums;font-size:32px;font-weight:700}
+.fb-sub{color:var(--lime-dark);opacity:.7;margin-top:4px;font-size:12px}
+
+.two-col{grid-template-columns:1fr 1fr;gap:1.2rem;display:grid}
+
+.tool-grid{display:grid;grid-template-columns:2fr 70px 70px 1fr;gap:6px 10px;font-size:12px;margin-bottom:8px;align-items:center}
+.tool-grid .col-head{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--hi);font-weight:700;padding-bottom:4px;border-bottom:1px solid var(--bd)}
+.tool-grid .col-head.num{text-align:right}
+.tool-grid .tool-name{color:var(--mu);font-size:12px;padding:4px 0}
+.tool-grid .tool-name .tu{display:block;font-size:10px;color:var(--hi);margin-top:1px}
+.tool-grid input{text-align:right;padding:6px 8px;font-size:12px}
+.tool-grid .annual-cost{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--tx);font-size:12px}
+.scenario-label{font-weight:700;color:var(--tx);text-transform:uppercase;letter-spacing:.06em;font-size:10px;margin:10px 0 6px}
+
+.fn{color:var(--hi);border-top:1px solid var(--bd);margin-top:1rem;padding-top:12px;font-size:11px;line-height:1.9}
+.fn strong{color:var(--mu)}
+.fn ul{margin-left:18px;margin-top:4px}
+.fn li{margin-bottom:2px}
+.fn code{background:var(--sur);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:10px}
+
+@media(max-width:760px){
+  .hero{padding:1.5rem 1.5rem}
+  .hero h1{font-size:2rem}
+  .hero::after{width:45%;background-size:12px 12px}
+  .two-col{grid-template-columns:1fr}
+  .gg{grid-template-columns:repeat(2,1fr)}
+  .ig2,.ig3{grid-template-columns:1fr}
+  .fb-row{flex-direction:column;gap:1rem}
+  .topbar{flex-direction:column;align-items:flex-start}
+}
+
+@media print{
+  @page{size:A4;margin:12mm 14mm}
+  body{background:#fff!important;font-size:11px}
+  .page{max-width:100%;padding:0}
+  .controls,.btn-print{display:none!important}
+  .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact;margin-bottom:.4rem;padding:1.1rem 1.4rem;border-radius:10px}
+  .hero h1{font-size:1.8rem}
+  .hero::after{opacity:.5}
+  .print-meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--mu);padding:0 2px;margin-bottom:.9rem}
+  .print-meta strong{color:var(--tx)}
+  .card{page-break-inside:avoid;border:1px solid #ddd;margin-bottom:.5rem;padding:.9rem 1.1rem}
+  .card.off{display:none!important}
+  .gc,.fb,.callout{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .gc{cursor:default}
+  .gc .tgl{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .selector-label{font-size:9px}
+  .fb{padding:1rem 1.2rem}
+  .fb-val{font-size:26px}
+  .fn{font-size:10px;line-height:1.6}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <h1>
+      <span class="l1">Computer by DevRev</span>
+      <span class="l2">Benefits Calculator</span>
+    </h1>
+  </div>
+
+  <div class="print-meta">
+    <span>Prepared for <strong id="print-company">—</strong></span>
+    <span id="print-date"></span>
+  </div>
+
+  <div class="controls">
+    <div class="tb-field"><label>Company</label><input id="company-name" type="text" value="Acme Corp" /></div>
+    <div class="tb-field"><label>Currency</label><select id="currency-select"><option value="€">€ EUR</option><option value="$">$ USD</option><option value="£">£ GBP</option></select></div>
+    <div class="tb-field"><label>NPV discount rate</label><input id="discount-rate" type="number" value="5" step="0.5" min="0" max="30" /></div>
+    <button class="btn-print" id="btn-print" type="button">Export as PDF</button>
+  </div>
+
+  <div class="selector-label">Include in total benefit — click to toggle</div>
+  <div class="gg">
+    <div class="gc c-grn" data-module="support"><span class="tgl"></span><div class="gl">Support</div><div class="gv" id="summary-support">—</div><div class="gsub">Year 1 net savings</div></div>
+    <div class="gc c-pur" data-module="search"><span class="tgl"></span><div class="gl">Enterprise search</div><div class="gv" id="summary-search">—</div><div class="gsub">Year 1 net value</div></div>
+    <div class="gc c-org" data-module="nps"><span class="tgl"></span><div class="gl">Customer satisfaction</div><div class="gv" id="summary-nps">—</div><div class="gsub">Annual incremental</div></div>
+    <div class="gc c-blu" data-module="ai"><span class="tgl"></span><div class="gl">AI centralization</div><div class="gv" id="summary-ai">—</div><div class="gsub">Annual cost avoidance</div></div>
+  </div>
+
+  <div class="fb">
+    <div class="fb-row">
+      <div class="fb-col">
+        <div class="fb-lbl">Year 1 annual benefit</div>
+        <div class="fb-val" id="total-annual">€0</div>
+        <div class="fb-sub"><span id="selected-count">4</span> of 4 contributions selected, Year 1</div>
+      </div>
+      <div class="fb-col">
+        <div class="fb-lbl">3-year NPV (discounted)</div>
+        <div class="fb-val" id="total-npv">€0</div>
+        <div class="fb-sub">Net present value over 3 years at <span id="summary-discount">5</span>% discount</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 1: SUPPORT -->
+  <div class="card c-grn" id="mod-support">
+    <div class="sthdr">
+      <div>
+        <div class="sttitle">01 · Support benefits</div>
+        <div class="sttitle-big">Case automation — FTE savings vs. case-volume growth</div>
+      </div>
+      <div class="st-right">
+        <div><span class="stl">Y1 NET</span><span class="stv grn" id="support-y1">—</span></div>
+        <div><span class="stl">3Y NPV</span><span class="stv grn" id="support-npv">—</span></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="group-label">Current state</div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Monthly case volume</label><input data-sup="currentMonthlyCases" type="number" value="1000" /></div>
+          <div class="ib"><label class="il">Annual growth rate (%)</label><input data-sup="annualGrowthRate" type="number" value="10" step="0.5" /></div>
+          <div class="ib"><label class="il">Cost per support FTE<span class="hint">fully loaded annual</span></label><input data-sup="costPerFTE" type="number" value="100000" step="1000" /></div>
+          <div class="ib"><label class="il">Cases per FTE per year</label><input data-sup="casesPerFTE" type="number" value="1200" /></div>
+        </div>
+
+        <div class="group-label">DevRev automation</div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Auto % Y1</label><input data-sup="autoY1" type="number" value="30" /></div>
+          <div class="ib"><label class="il">Auto % Y2</label><input data-sup="autoY2" type="number" value="40" /></div>
+          <div class="ib"><label class="il">Auto % Y3</label><input data-sup="autoY3" type="number" value="50" /></div>
+        </div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Setup cost (Y1 only)</label><input data-sup="setupCost" type="number" value="25000" step="1000" /></div>
+          <div class="ib"><label class="il">DevRev annual cost</label><input data-sup="annualCost" type="number" value="75000" step="1000" /></div>
+        </div>
+      </div>
+
+      <div>
+        <table class="bt">
+          <thead><tr><td></td><td class="rv">Y1</td><td class="rv">Y2</td><td class="rv">Y3</td></tr></thead>
+          <tbody id="support-table"></tbody>
+          <tfoot id="support-foot"></tfoot>
+        </table>
+        <div class="callout grn">
+          <div class="cl-lbl">Cumulative 3-year net savings</div>
+          <div class="cl-val" id="support-cumulative">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 2: SEARCH -->
+  <div class="card c-pur" id="mod-search">
+    <div class="sthdr">
+      <div>
+        <div class="sttitle">02 · Enterprise search benefits</div>
+        <div class="sttitle-big">Productivity, collaboration, and decision-quality gains</div>
+      </div>
+      <div class="st-right">
+        <div><span class="stl">Y1 NET</span><span class="stv pur" id="search-y1">—</span></div>
+        <div><span class="stl">3Y NPV</span><span class="stv pur" id="search-npv">—</span></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="group-label">Workforce</div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Knowledge workers</label><input data-sea="nWorkers" type="number" value="150" /></div>
+          <div class="ib"><label class="il">Hourly cost</label><input data-sea="hourlyCost" type="number" value="60" /></div>
+          <div class="ib"><label class="il">Workdays / year</label><input data-sea="workdays" type="number" value="220" /></div>
+        </div>
+
+        <div class="group-label">Productivity gain</div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Hours / day searching</label><input data-sea="hoursSearch" type="number" value="1.5" step="0.1" /></div>
+          <div class="ib"><label class="il">% time saved</label><input data-sea="searchGain" type="number" value="20" /></div>
+        </div>
+
+        <div class="group-label">Collaboration</div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Dup. hours / month / worker</label><input data-sea="dupHours" type="number" value="5" step="0.5" /></div>
+          <div class="ib"><label class="il">% reduction</label><input data-sea="dupReduction" type="number" value="15" /></div>
+        </div>
+
+        <div class="group-label">Decision quality</div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Decisions / month</label><input data-sea="decisions" type="number" value="10000" /></div>
+          <div class="ib"><label class="il">Value / decision</label><input data-sea="decisionValue" type="number" value="50" /></div>
+          <div class="ib"><label class="il">% improvement</label><input data-sea="decisionGain" type="number" value="10" step="0.5" /></div>
+        </div>
+
+        <div class="group-label">Adoption & cost</div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Adopt. Y1 (%)</label><input data-sea="adoptY1" type="number" value="50" /></div>
+          <div class="ib"><label class="il">Adopt. Y2 (%)</label><input data-sea="adoptY2" type="number" value="75" /></div>
+          <div class="ib"><label class="il">Adopt. Y3 (%)</label><input data-sea="adoptY3" type="number" value="90" /></div>
+        </div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Implementation (Y1)</label><input data-sea="onetime" type="number" value="25000" /></div>
+          <div class="ib"><label class="il">Annual license</label><input data-sea="license" type="number" value="75000" /></div>
+          <div class="ib"><label class="il">Change mgmt / yr</label><input data-sea="changeMgmt" type="number" value="10000" /></div>
+        </div>
+      </div>
+
+      <div>
+        <table class="bt">
+          <thead><tr><td>Base value components</td><td class="rv">Annual</td></tr></thead>
+          <tbody id="search-breakdown"></tbody>
+        </table>
+
+        <table class="bt" style="margin-top:16px">
+          <thead><tr><td>Adoption-adjusted</td><td class="rv">Y1</td><td class="rv">Y2</td><td class="rv">Y3</td></tr></thead>
+          <tbody id="search-year-table"></tbody>
+          <tfoot id="search-foot"></tfoot>
+        </table>
+
+        <div class="callout">
+          <div class="cl-lbl">Cumulative 3-year net value</div>
+          <div class="cl-val" id="search-cumulative">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 3: NPS -->
+  <div class="card c-org" id="mod-nps">
+    <div class="sthdr">
+      <div>
+        <div class="sttitle">03 · Customer satisfaction benefits</div>
+        <div class="sttitle-big">NPS-driven retention and referral revenue</div>
+      </div>
+      <div class="st-right">
+        <div><span class="stl">ANNUAL</span><span class="stv org" id="nps-annual">—</span></div>
+        <div><span class="stl">3Y NPV</span><span class="stv org" id="nps-npv">—</span></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="group-label">Customer base</div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Current customers</label><input data-nps="customers" type="number" value="100000" /></div>
+          <div class="ib"><label class="il">ARPU (annual)</label><input data-nps="arpu" type="number" value="2500" /></div>
+        </div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Current churn (%)</label><input data-nps="churn" type="number" value="40" step="0.5" /></div>
+          <div></div>
+        </div>
+
+        <div class="group-label">NPS improvement</div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Current NPS</label><input data-nps="currentNps" type="number" value="70" /></div>
+          <div class="ib"><label class="il">Target NPS</label><input data-nps="targetNps" type="number" value="75" /></div>
+        </div>
+
+        <div class="group-label">Sensitivity assumptions</div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Referral / +10 NPS (%)</label><input data-nps="referralPer10" type="number" value="5" step="0.5" /></div>
+          <div class="ib"><label class="il">CLV uplift / +10 NPS (%)</label><input data-nps="clvPer10" type="number" value="10" step="0.5" /></div>
+          <div class="ib"><label class="il">Retention / +1 NPS (p.p.)</label><input data-nps="retentionPer1" type="number" value="0.05" step="0.01" /></div>
+        </div>
+      </div>
+
+      <div>
+        <table class="bt">
+          <tbody id="nps-table"></tbody>
+          <tfoot id="nps-foot"></tfoot>
+        </table>
+        <div class="callout org">
+          <div class="cl-lbl">3-year NPV of incremental revenue</div>
+          <div class="cl-val" id="nps-npv-callout">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 4: AI CENTRALIZATION -->
+  <div class="card c-blu" id="mod-ai">
+    <div class="sthdr">
+      <div>
+        <div class="sttitle">04 · AI centralization benefits</div>
+        <div class="sttitle-big">Consolidation savings vs. fragmented point tools</div>
+      </div>
+      <div class="st-right">
+        <div><span class="stl">ANNUAL</span><span class="stv blu" id="ai-annual">—</span></div>
+        <div><span class="stl">3Y NPV</span><span class="stv blu" id="ai-npv">—</span></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="scenario-label" style="color:var(--org)">Scenario A — Fragmented AI stack</div>
+        <div class="tool-grid">
+          <div class="col-head">Tool</div>
+          <div class="col-head num">Price</div>
+          <div class="col-head num">Qty</div>
+          <div class="col-head num">Annual</div>
+
+          <div class="tool-name">Microsoft 365 Copilot<span class="tu">per user / month</span></div>
+          <div><input data-ai="copilotPrice" type="number" value="45" /></div>
+          <div><input data-ai="copilotQty" type="number" value="150" /></div>
+          <div class="annual-cost" data-ai-out="copilotCost">—</div>
+
+          <div class="tool-name">Salesforce Agentforce<span class="tu">per user / month</span></div>
+          <div><input data-ai="agentforcePrice" type="number" value="125" /></div>
+          <div><input data-ai="agentforceQty" type="number" value="0" /></div>
+          <div class="annual-cost" data-ai-out="agentforceCost">—</div>
+
+          <div class="tool-name">Zendesk AI Agents<span class="tu">per agent / month</span></div>
+          <div><input data-ai="zendeskPrice" type="number" value="50" /></div>
+          <div><input data-ai="zendeskQty" type="number" value="0" /></div>
+          <div class="annual-cost" data-ai-out="zendeskCost">—</div>
+
+          <div class="tool-name">HubSpot Breeze AI<span class="tu">per org / month</span></div>
+          <div><input data-ai="hubspotPrice" type="number" value="1000" /></div>
+          <div><input data-ai="hubspotQty" type="number" value="0" /></div>
+          <div class="annual-cost" data-ai-out="hubspotCost">—</div>
+
+          <div class="tool-name">Freshworks Freddy AI<span class="tu">per agent / month</span></div>
+          <div><input data-ai="freddyPrice" type="number" value="20" /></div>
+          <div><input data-ai="freddyQty" type="number" value="150" /></div>
+          <div class="annual-cost" data-ai-out="freddyCost">—</div>
+
+          <div class="tool-name">Integration & glue<span class="tu">flat / year</span></div>
+          <div></div>
+          <div><input data-ai="integrationCost" type="number" value="100000" /></div>
+          <div class="annual-cost" data-ai-out="integrationDisplay">—</div>
+        </div>
+
+        <div class="scenario-label" style="color:var(--blu);margin-top:20px">Scenario B — DevRev Computer (centralized)</div>
+        <div class="tool-grid">
+          <div class="tool-name">DevRev AI platform<span class="tu">per user / month</span></div>
+          <div><input data-ai="devrevPrice" type="number" value="42" /></div>
+          <div><input data-ai="devrevQty" type="number" value="150" /></div>
+          <div class="annual-cost" data-ai-out="devrevCost">—</div>
+        </div>
+      </div>
+
+      <div>
+        <table class="bt">
+          <tbody id="ai-table"></tbody>
+          <tfoot id="ai-foot"></tfoot>
+        </table>
+        <div class="callout blu">
+          <div class="cl-lbl">Annual cost avoidance (A − B)</div>
+          <div class="cl-val" id="ai-annual-callout">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fn">
+    <strong>About this calculator.</strong> Estimates the value of a DevRev Computer implementation across four benefit categories for directional planning — not a guarantee. All inputs are editable locally; nothing is sent to a server.
+    <ul>
+      <li><strong>NPV</strong> is calculated over a 3-year horizon at the discount rate set in the header. Year 1 is discounted by (1+r), Year 2 by (1+r)², Year 3 by (1+r)³.</li>
+      <li><strong>Support</strong>: <code>salary_savings = (FTE without automation − FTE with automation) × cost per FTE</code>, minus DevRev cost. Setup cost hits Y1 only.</li>
+      <li><strong>Search</strong>: sums productivity, collaboration, and decision-quality components, then applies annual adoption minus cost.</li>
+      <li><strong>NPS</strong>: treats incremental retention + referral revenue as a recurring annual cash flow, discounted over the horizon.</li>
+      <li><strong>AI centralization</strong>: compares annual run-rate of a fragmented AI stack against a single DevRev subscription for the same population.</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+  let currency = '€';
+  let discountRate = 0.10;
+  const enabled = { support: true, search: true, nps: true, ai: true };
+
+  function applyToggles() {
+    document.querySelectorAll('.gc[data-module]').forEach(el => {
+      const m = el.dataset.module;
+      el.classList.toggle('off', !enabled[m]);
+      const card = document.getElementById('mod-' + m);
+      if (card) card.classList.toggle('off', !enabled[m]);
+    });
+  }
+
+  const fmt = (n) => {
+    if (!isFinite(n)) return '—';
+    const sign = n < 0 ? '−' : '';
+    const absN = Math.abs(n);
+    if (absN >= 1e9) return sign + currency + (absN/1e9).toFixed(2) + 'B';
+    if (absN >= 1e6) return sign + currency + (absN/1e6).toFixed(2) + 'M';
+    if (absN >= 1e3) return sign + currency + (absN/1e3).toFixed(0) + 'K';
+    return sign + currency + absN.toFixed(0);
+  };
+  const fmtFull = (n) => {
+    if (!isFinite(n)) return '—';
+    const sign = n < 0 ? '−' : '';
+    return sign + currency + Math.round(Math.abs(n)).toLocaleString('en-US').replace(/,/g, ' ');
+  };
+  const fmtPct = (n, d = 2) => (isFinite(n) ? (n * 100).toFixed(d) + '%' : '—');
+  const fmtNum = (n) => (isFinite(n) ? Math.round(n).toLocaleString('en-US').replace(/,/g, ' ') : '—');
+
+  const getInput = (sel, attr) => {
+    const el = document.querySelector(`input[data-${sel}="${attr}"]`);
+    return el ? parseFloat(el.value) || 0 : 0;
+  };
+  const npv = (cf, rate) => cf.reduce((s, c, i) => s + c / Math.pow(1 + rate, i + 1), 0);
+
+  function computeSupport() {
+    const monthly = getInput('sup','currentMonthlyCases');
+    const growth = getInput('sup','annualGrowthRate') / 100;
+    const costFTE = getInput('sup','costPerFTE');
+    const casesPerFTE = getInput('sup','casesPerFTE') || 1;
+    const setupCost = getInput('sup','setupCost');
+    const annualCost = getInput('sup','annualCost');
+    const autoRates = [getInput('sup','autoY1')/100, getInput('sup','autoY2')/100, getInput('sup','autoY3')/100];
+
+    const yearlyBase = monthly * 12;
+    const years = [0,1,2].map(i => {
+      const yearlyCases = yearlyBase * Math.pow(1 + growth, i + 1);
+      const automated = yearlyCases * autoRates[i];
+      const human = yearlyCases - automated;
+      const fteNoAuto = Math.ceil(yearlyCases / casesPerFTE);
+      const fteWithAuto = Math.ceil(human / casesPerFTE);
+      const fteSavings = fteNoAuto - fteWithAuto;
+      const salarySavings = fteSavings * costFTE;
+      const devrevCost = annualCost + (i === 0 ? setupCost : 0);
+      return { yearlyCases, automated, human, fteNoAuto, fteWithAuto, fteSavings,
+               salarySavings, devrevCost, netSavings: salarySavings - devrevCost };
+    });
+    const cashflows = years.map(y => y.netSavings);
+    return { years, cumulative: cashflows.reduce((a,b)=>a+b,0), npv: npv(cashflows, discountRate), cashflows };
+  }
+
+  function renderSupport(r) {
+    const rows = [
+      ['Yearly case volume', r.years.map(y => fmtNum(y.yearlyCases))],
+      ['Automated cases', r.years.map(y => fmtNum(y.automated))],
+      ['Human-handled cases', r.years.map(y => fmtNum(y.human))],
+      ['FTE — no automation', r.years.map(y => y.fteNoAuto)],
+      ['FTE — with automation', r.years.map(y => y.fteWithAuto)],
+      ['FTE savings', r.years.map(y => y.fteSavings)],
+      ['Salary savings', r.years.map(y => fmtFull(y.salarySavings))],
+      ['DevRev cost', r.years.map(y => '−' + fmtFull(y.devrevCost).replace('−',''))],
+    ];
+    document.getElementById('support-table').innerHTML = rows.map(row =>
+      `<tr><td>${row[0]}</td><td class="rv">${row[1][0]}</td><td class="rv">${row[1][1]}</td><td class="rv">${row[1][2]}</td></tr>`).join('');
+    document.getElementById('support-foot').innerHTML =
+      `<tr><td>Net savings</td>${r.years.map(y => `<td class="rv" style="color:var(--grn)">${fmtFull(y.netSavings)}</td>`).join('')}</tr>`;
+    document.getElementById('support-y1').textContent = fmt(r.years[0].netSavings);
+    document.getElementById('support-npv').textContent = fmt(r.npv);
+    document.getElementById('support-cumulative').textContent = fmtFull(r.cumulative);
+    document.getElementById('summary-support').textContent = fmt(r.years[0].netSavings);
+  }
+
+  function computeSearch() {
+    const n = getInput('sea','nWorkers'), hourly = getInput('sea','hourlyCost'),
+      wd = getInput('sea','workdays'), hrsSearch = getInput('sea','hoursSearch'),
+      searchGain = getInput('sea','searchGain')/100, dupHours = getInput('sea','dupHours'),
+      dupRed = getInput('sea','dupReduction')/100, decisions = getInput('sea','decisions'),
+      decVal = getInput('sea','decisionValue'), decGain = getInput('sea','decisionGain')/100;
+    const adoptions = [getInput('sea','adoptY1')/100, getInput('sea','adoptY2')/100, getInput('sea','adoptY3')/100];
+    const onetime = getInput('sea','onetime'), license = getInput('sea','license'), changeMgmt = getInput('sea','changeMgmt');
+
+    const productivity = n * hourly * hrsSearch * wd * searchGain;
+    const collaboration = n * hourly * dupHours * 12 * dupRed;
+    const decision = decisions * decVal * 12 * decGain;
+    const baseValue = productivity + collaboration + decision;
+
+    const years = adoptions.map((adoption, i) => {
+      const adjustedValue = baseValue * adoption;
+      const cost = license + changeMgmt + (i === 0 ? onetime : 0);
+      return { adoption, adjustedValue, cost, net: adjustedValue - cost };
+    });
+    const cashflows = years.map(y => y.net);
+    return { productivity, collaboration, decision, baseValue, years,
+             cumulative: cashflows.reduce((a,b)=>a+b,0), npv: npv(cashflows, discountRate), cashflows };
+  }
+
+  function renderSearch(r) {
+    document.getElementById('search-breakdown').innerHTML = `
+      <tr><td>Productivity gain</td><td class="rv">${fmtFull(r.productivity)}</td></tr>
+      <tr><td>Collaboration efficiency</td><td class="rv">${fmtFull(r.collaboration)}</td></tr>
+      <tr><td>Decision quality & speed</td><td class="rv">${fmtFull(r.decision)}</td></tr>
+      <tr style="border-top:1.5px solid var(--bhi) !important"><td style="color:var(--tx);font-weight:700">Base value (100% adoption)</td><td class="rv" style="color:var(--pur)">${fmtFull(r.baseValue)}</td></tr>
+    `;
+    document.getElementById('search-year-table').innerHTML = `
+      <tr><td>Adoption</td>${r.years.map(y => `<td class="rv">${(y.adoption*100).toFixed(0)}%</td>`).join('')}</tr>
+      <tr><td>Adjusted value</td>${r.years.map(y => `<td class="rv">${fmtFull(y.adjustedValue)}</td>`).join('')}</tr>
+      <tr><td>Total cost</td>${r.years.map(y => `<td class="rv">−${fmtFull(y.cost).replace('−','')}</td>`).join('')}</tr>
+    `;
+    document.getElementById('search-foot').innerHTML =
+      `<tr><td>Net value</td>${r.years.map(y => `<td class="rv">${fmtFull(y.net)}</td>`).join('')}</tr>`;
+    document.getElementById('search-y1').textContent = fmt(r.years[0].net);
+    document.getElementById('search-npv').textContent = fmt(r.npv);
+    document.getElementById('search-cumulative').textContent = fmtFull(r.cumulative);
+    document.getElementById('summary-search').textContent = fmt(r.years[0].net);
+  }
+
+  function computeNPS() {
+    const customers = getInput('nps','customers'), arpu = getInput('nps','arpu'),
+      churn = getInput('nps','churn')/100, curNps = getInput('nps','currentNps'),
+      tarNps = getInput('nps','targetNps'), refPer10 = getInput('nps','referralPer10')/100,
+      clvPer10 = getInput('nps','clvPer10')/100, retPer1 = getInput('nps','retentionPer1')/100;
+
+    const delta = tarNps - curNps;
+    const referralGrowth = (delta/10) * refPer10;
+    const clvUplift = 1 + (delta/10) * clvPer10;
+    const retentionImprovement = delta * retPer1;
+    const newChurn = Math.max(0, churn - retentionImprovement);
+    const customersRetained = customers * retentionImprovement;
+    const retentionRevenue = customersRetained * arpu;
+    const newReferralCustomers = customers * referralGrowth;
+    const referralRevenue = newReferralCustomers * arpu;
+    const annualIncremental = retentionRevenue + referralRevenue;
+    const cashflows = [annualIncremental, annualIncremental, annualIncremental];
+    return { delta, referralGrowth, clvUplift, retentionImprovement, newChurn,
+             customersRetained, retentionRevenue, newReferralCustomers, referralRevenue,
+             annualIncremental, npv: npv(cashflows, discountRate), cashflows };
+  }
+
+  function renderNPS(r) {
+    document.getElementById('nps-table').innerHTML = `
+      <tr><td>NPS delta (target − current)</td><td class="rv">+${r.delta}</td></tr>
+      <tr><td>Retention improvement</td><td class="rv">${fmtPct(r.retentionImprovement, 2)}</td></tr>
+      <tr><td>New churn rate</td><td class="rv">${fmtPct(r.newChurn, 2)}</td></tr>
+      <tr><td>Referral growth</td><td class="rv">${fmtPct(r.referralGrowth, 2)}</td></tr>
+      <tr><td>CLV uplift factor</td><td class="rv">${r.clvUplift.toFixed(3)}×</td></tr>
+      <tr><td>Customers retained / year</td><td class="rv">${fmtNum(r.customersRetained)}</td></tr>
+      <tr><td>Revenue from retention</td><td class="rv">${fmtFull(r.retentionRevenue)}</td></tr>
+      <tr><td>New customers from referrals</td><td class="rv">${fmtNum(r.newReferralCustomers)}</td></tr>
+      <tr><td>Revenue from referrals</td><td class="rv">${fmtFull(r.referralRevenue)}</td></tr>
+    `;
+    document.getElementById('nps-foot').innerHTML =
+      `<tr><td>Annual incremental revenue</td><td class="rv" style="color:#b85a00">${fmtFull(r.annualIncremental)}</td></tr>`;
+    document.getElementById('nps-annual').textContent = fmt(r.annualIncremental);
+    document.getElementById('nps-npv').textContent = fmt(r.npv);
+    document.getElementById('nps-npv-callout').textContent = fmtFull(r.npv);
+    document.getElementById('summary-nps').textContent = fmt(r.annualIncremental);
+  }
+
+  function computeAI() {
+    const cp = getInput('ai','copilotPrice') * getInput('ai','copilotQty') * 12;
+    const af = getInput('ai','agentforcePrice') * getInput('ai','agentforceQty') * 12;
+    const zd = getInput('ai','zendeskPrice') * getInput('ai','zendeskQty') * 12;
+    const hs = getInput('ai','hubspotPrice') * getInput('ai','hubspotQty') * 12;
+    const fd = getInput('ai','freddyPrice') * getInput('ai','freddyQty') * 12;
+    const integ = getInput('ai','integrationCost');
+    const dr = getInput('ai','devrevPrice') * getInput('ai','devrevQty') * 12;
+    const scenarioA = cp + af + zd + hs + fd + integ;
+    const scenarioB = dr;
+    const annualSavings = scenarioA - scenarioB;
+    const cashflows = [annualSavings, annualSavings, annualSavings];
+    return { copilotCost:cp, agentforceCost:af, zendeskCost:zd, hubspotCost:hs, freddyCost:fd, integ,
+             scenarioA, devrevCost:dr, scenarioB, annualSavings,
+             npv: npv(cashflows, discountRate), cashflows };
+  }
+
+  function renderAI(r) {
+    document.querySelector('[data-ai-out="copilotCost"]').textContent = fmtFull(r.copilotCost);
+    document.querySelector('[data-ai-out="agentforceCost"]').textContent = fmtFull(r.agentforceCost);
+    document.querySelector('[data-ai-out="zendeskCost"]').textContent = fmtFull(r.zendeskCost);
+    document.querySelector('[data-ai-out="hubspotCost"]').textContent = fmtFull(r.hubspotCost);
+    document.querySelector('[data-ai-out="freddyCost"]').textContent = fmtFull(r.freddyCost);
+    document.querySelector('[data-ai-out="integrationDisplay"]').textContent = fmtFull(r.integ);
+    document.querySelector('[data-ai-out="devrevCost"]').textContent = fmtFull(r.devrevCost);
+
+    document.getElementById('ai-table').innerHTML = `
+      <tr><td style="color:var(--org);font-weight:700">Scenario A — Fragmented stack</td><td class="rv" style="color:#b85a00">${fmtFull(r.scenarioA)}</td></tr>
+      <tr><td style="padding-left:18px">Microsoft 365 Copilot</td><td class="rv">${fmtFull(r.copilotCost)}</td></tr>
+      <tr><td style="padding-left:18px">Salesforce Agentforce</td><td class="rv">${fmtFull(r.agentforceCost)}</td></tr>
+      <tr><td style="padding-left:18px">Zendesk AI Agents</td><td class="rv">${fmtFull(r.zendeskCost)}</td></tr>
+      <tr><td style="padding-left:18px">HubSpot Breeze AI</td><td class="rv">${fmtFull(r.hubspotCost)}</td></tr>
+      <tr><td style="padding-left:18px">Freshworks Freddy AI</td><td class="rv">${fmtFull(r.freddyCost)}</td></tr>
+      <tr><td style="padding-left:18px">Integration & glue</td><td class="rv">${fmtFull(r.integ)}</td></tr>
+      <tr><td style="color:var(--blu);font-weight:700">Scenario B — DevRev centralized</td><td class="rv" style="color:var(--blu)">${fmtFull(r.scenarioB)}</td></tr>
+    `;
+    document.getElementById('ai-foot').innerHTML =
+      `<tr><td>Annual cost avoidance (A − B)</td><td class="rv" style="color:var(--blu)">${fmtFull(r.annualSavings)}</td></tr>`;
+    document.getElementById('ai-annual').textContent = fmt(r.annualSavings);
+    document.getElementById('ai-npv').textContent = fmt(r.npv);
+    document.getElementById('ai-annual-callout').textContent = fmtFull(r.annualSavings);
+    document.getElementById('summary-ai').textContent = fmt(r.annualSavings);
+  }
+
+  function renderTotals(s, e, n, a) {
+    const annualY1 =
+      (enabled.support ? s.years[0].netSavings : 0) +
+      (enabled.search  ? e.years[0].net        : 0) +
+      (enabled.nps     ? n.annualIncremental   : 0) +
+      (enabled.ai      ? a.annualSavings       : 0);
+    const totalCF = [0,1,2].map(i =>
+      (enabled.support ? s.cashflows[i] : 0) +
+      (enabled.search  ? e.cashflows[i] : 0) +
+      (enabled.nps     ? n.cashflows[i] : 0) +
+      (enabled.ai      ? a.cashflows[i] : 0)
+    );
+    document.getElementById('total-annual').textContent = fmt(annualY1);
+    document.getElementById('total-npv').textContent = fmt(npv(totalCF, discountRate));
+    const count = Object.values(enabled).filter(Boolean).length;
+    document.getElementById('selected-count').textContent = count;
+  }
+
+  function recompute() {
+    const s = computeSupport(), e = computeSearch(), n = computeNPS(), a = computeAI();
+    renderSupport(s); renderSearch(e); renderNPS(n); renderAI(a); renderTotals(s, e, n, a);
+  }
+
+  document.addEventListener('input', (ev) => {
+    const t = ev.target;
+    if (t.id === 'company-name') return;
+    if (t.id === 'discount-rate') {
+      discountRate = (parseFloat(t.value) || 0) / 100;
+      document.getElementById('summary-discount').textContent = t.value;
+    }
+    recompute();
+  });
+  document.getElementById('currency-select').addEventListener('change', (ev) => {
+    currency = ev.target.value;
+    recompute();
+  });
+
+  document.querySelectorAll('.gc[data-module]').forEach(el => {
+    el.addEventListener('click', () => {
+      const m = el.dataset.module;
+      enabled[m] = !enabled[m];
+      applyToggles();
+      recompute();
+    });
+  });
+
+  document.getElementById('btn-print').addEventListener('click', () => {
+    const company = document.getElementById('company-name').value.trim() || '—';
+    const date = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('print-company').textContent = company;
+    document.getElementById('print-date').textContent = date;
+    window.print();
+  });
+
+  currency = document.getElementById('currency-select').value;
+  discountRate = (parseFloat(document.getElementById('discount-rate').value) || 0) / 100;
+  applyToggles();
+  recompute();
+</script>
+</body>
+</html>
