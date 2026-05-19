@@ -136,6 +136,20 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
 .fn li{margin-bottom:2px}
 .fn code{background:var(--sur);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:10px}
 
+.disclaimer-bar{background:#1a1a2e;color:#ccc;text-align:center;padding:8px 16px;font-size:11px;font-weight:500;letter-spacing:.02em;line-height:1.5}
+.disclaimer-bar a{color:#ffe600;text-decoration:none}
+.disclaimer-bar a:hover{text-decoration:underline}
+.disclaimer-bar strong{color:#fff;font-weight:700}
+.disclaimer-top{position:sticky;top:0;z-index:1000;border-bottom:2px solid #ffe600}
+.disclaimer-bottom{border-top:2px solid #ffe600;margin-top:0}
+.disclaimer-side{position:fixed;top:50%;z-index:999;writing-mode:vertical-rl;background:#1a1a2e;color:#ccc;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:14px 6px;border-radius:0 0 6px 6px;opacity:.75;pointer-events:none}
+.disclaimer-side.left{left:0;transform:translateY(-50%) rotate(180deg);border-radius:6px 6px 0 0}
+.disclaimer-side.right{right:0;transform:translateY(-50%);border-radius:0 0 6px 6px}
+.version-tag{margin-top:10px;text-align:right;font-size:10px;color:var(--hi);font-weight:600;letter-spacing:.04em}
+.btn-export{border:1.5px solid var(--pur);background:#fff;color:var(--pur);border-radius:8px;padding:8px 16px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:all .15s;height:33px;white-space:nowrap}
+.btn-export:hover{background:var(--pur);color:#fff}
+.btn-export:active{transform:translateY(1px)}
+
 @media(max-width:760px){
   .hero{padding:1.5rem 1.5rem}
   .hero h1{font-size:2rem}
@@ -145,13 +159,14 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
   .ig2,.ig3{grid-template-columns:1fr}
   .fb-row{flex-direction:column;gap:1rem}
   .topbar{flex-direction:column;align-items:flex-start}
+  .disclaimer-side{display:none!important}
 }
 
 @media print{
   @page{size:A4;margin:12mm 14mm}
   body{background:#fff!important;font-size:11px}
   .page{max-width:100%;padding:0}
-  .controls,.btn-print{display:none!important}
+  .controls,.btn-print,.btn-export{display:none!important}
   .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact;margin-bottom:.4rem;padding:1.1rem 1.4rem;border-radius:10px}
   .hero h1{font-size:1.8rem}
   .hero::after{opacity:.5}
@@ -166,10 +181,16 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
   .fb{padding:1rem 1.2rem}
   .fb-val{font-size:26px}
   .fn{font-size:10px;line-height:1.6}
+  .disclaimer-top{position:static}
+  .disclaimer-bar{font-size:9px;padding:5px 10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .disclaimer-side{display:none!important}
 }
 </style>
 </head>
 <body>
+<div class="disclaimer-bar disclaimer-top">⚠ Personal project by <strong>Rik Van Bruggen</strong> — not endorsed by or affiliated with DevRev, Inc. Intended as an independent trial tool for users and customers to estimate potential benefits of the DevRev system.</div>
+<div class="disclaimer-side left">Not affiliated with DevRev</div>
+<div class="disclaimer-side right">Personal project · Rik Van Bruggen</div>
 <div class="page">
 
   <div class="hero">
@@ -189,6 +210,8 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
     <div class="tb-field"><label>Currency</label><select id="currency-select"><option value="€">€ EUR</option><option value="$">$ USD</option><option value="£">£ GBP</option></select></div>
     <div class="tb-field"><label>NPV discount rate</label><input id="discount-rate" type="number" value="5" step="0.5" min="0" max="30" /></div>
     <button class="btn-print" id="btn-print" type="button">Export as PDF</button>
+    <button class="btn-export" id="btn-xlsx" type="button">Export as Excel</button>
+    <button class="btn-export" id="btn-md" type="button">Export as Markdown</button>
   </div>
 
   <div class="selector-label">Include in total benefit — click to toggle</div>
@@ -473,9 +496,12 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
       <li><strong>NPS</strong>: treats incremental retention + referral revenue as a recurring annual cash flow, discounted over the horizon.</li>
       <li><strong>AI centralization</strong>: compares annual run-rate of a fragmented AI stack against a single DevRev subscription for the same population.</li>
     </ul>
+    <div class="version-tag">v0.1.0</div>
   </div>
 
 </div>
+
+<div class="disclaimer-bar disclaimer-bottom">This calculator is a <strong>personal project</strong> by Rik Van Bruggen. It is not endorsed by, affiliated with, or supported by DevRev, Inc. All estimates are illustrative only and should not be treated as guarantees.</div>
 
 <script>
   let currency = '€';
@@ -744,6 +770,372 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
     document.getElementById('print-date').textContent = date;
     window.print();
   });
+
+  // ── Excel export (pure JS XLSX via SheetJS-style XML spreadsheet) ──
+  function exportXLSX() {
+    const company = document.getElementById('company-name').value.trim() || 'Company';
+    const date = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    const s = computeSupport(), e = computeSearch(), n = computeNPS(), a = computeAI();
+    const cur = currency;
+    const rawNum = (v) => Math.round(v);
+
+    const sheets = [];
+
+    // Summary sheet
+    const summaryRows = [
+      ['DevRev Benefits Calculator — Summary'],
+      ['Prepared for', company],
+      ['Date', date],
+      ['Currency', cur],
+      ['Discount rate', (discountRate * 100).toFixed(1) + '%'],
+      [],
+      ['Benefit category', 'Enabled', 'Year 1 value (' + cur + ')', '3-year NPV (' + cur + ')'],
+      ['Support — Case automation', enabled.support ? 'Yes' : 'No', rawNum(s.years[0].netSavings), rawNum(s.npv)],
+      ['Enterprise search', enabled.search ? 'Yes' : 'No', rawNum(e.years[0].net), rawNum(e.npv)],
+      ['Customer satisfaction (NPS)', enabled.nps ? 'Yes' : 'No', rawNum(n.annualIncremental), rawNum(n.npv)],
+      ['AI centralization', enabled.ai ? 'Yes' : 'No', rawNum(a.annualSavings), rawNum(a.npv)],
+      [],
+      ['Total (selected only)', '',
+        (enabled.support ? s.years[0].netSavings : 0) + (enabled.search ? e.years[0].net : 0) + (enabled.nps ? n.annualIncremental : 0) + (enabled.ai ? a.annualSavings : 0),
+        rawNum(npv([0,1,2].map(i => (enabled.support ? s.cashflows[i] : 0) + (enabled.search ? e.cashflows[i] : 0) + (enabled.nps ? n.cashflows[i] : 0) + (enabled.ai ? a.cashflows[i] : 0)), discountRate))
+      ],
+    ];
+    sheets.push({ name: 'Summary', rows: summaryRows });
+
+    // Support sheet
+    sheets.push({ name: 'Support', rows: [
+      ['Support — Case Automation FTE Savings'],
+      [],
+      ['Inputs'],
+      ['Monthly case volume', getInput('sup','currentMonthlyCases')],
+      ['Annual growth rate', getInput('sup','annualGrowthRate') + '%'],
+      ['Cost per support FTE', rawNum(getInput('sup','costPerFTE'))],
+      ['Cases per FTE per year', getInput('sup','casesPerFTE')],
+      ['Automation % Y1', getInput('sup','autoY1') + '%'],
+      ['Automation % Y2', getInput('sup','autoY2') + '%'],
+      ['Automation % Y3', getInput('sup','autoY3') + '%'],
+      ['Setup cost (Y1)', rawNum(getInput('sup','setupCost'))],
+      ['Annual DevRev cost', rawNum(getInput('sup','annualCost'))],
+      [],
+      ['Metric', 'Year 1', 'Year 2', 'Year 3'],
+      ['Yearly case volume', rawNum(s.years[0].yearlyCases), rawNum(s.years[1].yearlyCases), rawNum(s.years[2].yearlyCases)],
+      ['Automated cases', rawNum(s.years[0].automated), rawNum(s.years[1].automated), rawNum(s.years[2].automated)],
+      ['Human-handled cases', rawNum(s.years[0].human), rawNum(s.years[1].human), rawNum(s.years[2].human)],
+      ['FTE — no automation', s.years[0].fteNoAuto, s.years[1].fteNoAuto, s.years[2].fteNoAuto],
+      ['FTE — with automation', s.years[0].fteWithAuto, s.years[1].fteWithAuto, s.years[2].fteWithAuto],
+      ['FTE savings', s.years[0].fteSavings, s.years[1].fteSavings, s.years[2].fteSavings],
+      ['Salary savings', rawNum(s.years[0].salarySavings), rawNum(s.years[1].salarySavings), rawNum(s.years[2].salarySavings)],
+      ['DevRev cost', rawNum(s.years[0].devrevCost), rawNum(s.years[1].devrevCost), rawNum(s.years[2].devrevCost)],
+      ['Net savings', rawNum(s.years[0].netSavings), rawNum(s.years[1].netSavings), rawNum(s.years[2].netSavings)],
+      [],
+      ['Cumulative 3-year net savings', rawNum(s.cumulative)],
+      ['3-year NPV', rawNum(s.npv)],
+    ]});
+
+    // Search sheet
+    sheets.push({ name: 'Enterprise Search', rows: [
+      ['Enterprise Search — Productivity, Collaboration & Decision Quality'],
+      [],
+      ['Inputs'],
+      ['Knowledge workers', getInput('sea','nWorkers')],
+      ['Hourly cost', getInput('sea','hourlyCost')],
+      ['Workdays / year', getInput('sea','workdays')],
+      ['Hours / day searching', getInput('sea','hoursSearch')],
+      ['% time saved', getInput('sea','searchGain') + '%'],
+      ['Dup. hours / month / worker', getInput('sea','dupHours')],
+      ['% dup reduction', getInput('sea','dupReduction') + '%'],
+      ['Decisions / month', getInput('sea','decisions')],
+      ['Value per decision', getInput('sea','decisionValue')],
+      ['% decision improvement', getInput('sea','decisionGain') + '%'],
+      ['Adoption Y1 / Y2 / Y3', getInput('sea','adoptY1') + '% / ' + getInput('sea','adoptY2') + '% / ' + getInput('sea','adoptY3') + '%'],
+      ['Implementation cost (Y1)', rawNum(getInput('sea','onetime'))],
+      ['Annual license', rawNum(getInput('sea','license'))],
+      ['Change mgmt / year', rawNum(getInput('sea','changeMgmt'))],
+      [],
+      ['Base value components', 'Annual (' + cur + ')'],
+      ['Productivity gain', rawNum(e.productivity)],
+      ['Collaboration efficiency', rawNum(e.collaboration)],
+      ['Decision quality & speed', rawNum(e.decision)],
+      ['Base value (100% adoption)', rawNum(e.baseValue)],
+      [],
+      ['Adoption-adjusted', 'Year 1', 'Year 2', 'Year 3'],
+      ['Adoption', (e.years[0].adoption*100).toFixed(0) + '%', (e.years[1].adoption*100).toFixed(0) + '%', (e.years[2].adoption*100).toFixed(0) + '%'],
+      ['Adjusted value', rawNum(e.years[0].adjustedValue), rawNum(e.years[1].adjustedValue), rawNum(e.years[2].adjustedValue)],
+      ['Total cost', rawNum(e.years[0].cost), rawNum(e.years[1].cost), rawNum(e.years[2].cost)],
+      ['Net value', rawNum(e.years[0].net), rawNum(e.years[1].net), rawNum(e.years[2].net)],
+      [],
+      ['Cumulative 3-year net value', rawNum(e.cumulative)],
+      ['3-year NPV', rawNum(e.npv)],
+    ]});
+
+    // NPS sheet
+    sheets.push({ name: 'Customer Satisfaction', rows: [
+      ['Customer Satisfaction — NPS-driven Retention & Referral Revenue'],
+      [],
+      ['Inputs'],
+      ['Current customers', getInput('nps','customers')],
+      ['ARPU (annual)', getInput('nps','arpu')],
+      ['Current churn rate', getInput('nps','churn') + '%'],
+      ['Current NPS', getInput('nps','currentNps')],
+      ['Target NPS', getInput('nps','targetNps')],
+      ['Referral per +10 NPS', getInput('nps','referralPer10') + '%'],
+      ['CLV uplift per +10 NPS', getInput('nps','clvPer10') + '%'],
+      ['Retention per +1 NPS (p.p.)', getInput('nps','retentionPer1')],
+      [],
+      ['Metric', 'Value'],
+      ['NPS delta', '+' + n.delta],
+      ['Retention improvement', (n.retentionImprovement * 100).toFixed(2) + '%'],
+      ['New churn rate', (n.newChurn * 100).toFixed(2) + '%'],
+      ['Referral growth', (n.referralGrowth * 100).toFixed(2) + '%'],
+      ['CLV uplift factor', n.clvUplift.toFixed(3) + '×'],
+      ['Customers retained / year', rawNum(n.customersRetained)],
+      ['Revenue from retention', rawNum(n.retentionRevenue)],
+      ['New customers from referrals', rawNum(n.newReferralCustomers)],
+      ['Revenue from referrals', rawNum(n.referralRevenue)],
+      ['Annual incremental revenue', rawNum(n.annualIncremental)],
+      [],
+      ['3-year NPV', rawNum(n.npv)],
+    ]});
+
+    // AI sheet
+    sheets.push({ name: 'AI Centralization', rows: [
+      ['AI Centralization — Consolidation Savings'],
+      [],
+      ['Scenario A — Fragmented AI stack', 'Annual cost (' + cur + ')'],
+      ['Microsoft 365 Copilot', rawNum(a.copilotCost)],
+      ['Salesforce Agentforce', rawNum(a.agentforceCost)],
+      ['Zendesk AI Agents', rawNum(a.zendeskCost)],
+      ['HubSpot Breeze AI', rawNum(a.hubspotCost)],
+      ['Freshworks Freddy AI', rawNum(a.freddyCost)],
+      ['Integration & glue', rawNum(a.integ)],
+      ['Total Scenario A', rawNum(a.scenarioA)],
+      [],
+      ['Scenario B — DevRev centralized', 'Annual cost (' + cur + ')'],
+      ['DevRev AI platform', rawNum(a.devrevCost)],
+      [],
+      ['Annual cost avoidance (A − B)', rawNum(a.annualSavings)],
+      ['3-year NPV', rawNum(a.npv)],
+    ]});
+
+    // Build XML Spreadsheet 2003
+    const esc = (v) => String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<?mso-application progid="Excel.Sheet"?>\n';
+    xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
+    xml += '<Styles><Style ss:ID="hdr"><Font ss:Bold="1" ss:Size="11"/></Style>';
+    xml += '<Style ss:ID="title"><Font ss:Bold="1" ss:Size="14"/></Style>';
+    xml += '<Style ss:ID="num"><NumberFormat ss:Format="#,##0"/></Style></Styles>\n';
+    for (const sheet of sheets) {
+      xml += `<Worksheet ss:Name="${esc(sheet.name)}"><Table>\n`;
+      for (let ri = 0; ri < sheet.rows.length; ri++) {
+        const row = sheet.rows[ri];
+        if (!row || row.length === 0) { xml += '<Row></Row>\n'; continue; }
+        xml += '<Row>';
+        const isTitle = ri === 0;
+        const isHeader = row.length >= 3 && typeof row[1] === 'string' && (row[1].startsWith('Year') || row[1] === 'Value' || row[1].startsWith('Annual') || row[1] === 'Enabled');
+        for (const cell of row) {
+          const style = isTitle ? ' ss:StyleID="title"' : (isHeader ? ' ss:StyleID="hdr"' : '');
+          if (typeof cell === 'number') {
+            xml += `<Cell${style || ' ss:StyleID="num"'}><Data ss:Type="Number">${cell}</Data></Cell>`;
+          } else {
+            xml += `<Cell${style}><Data ss:Type="String">${esc(cell)}</Data></Cell>`;
+          }
+        }
+        xml += '</Row>\n';
+      }
+      xml += '</Table></Worksheet>\n';
+    }
+    xml += '</Workbook>';
+
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `DevRev_Benefits_${company.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Markdown export ──
+  function exportMarkdown() {
+    const company = document.getElementById('company-name').value.trim() || 'Company';
+    const date = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    const s = computeSupport(), e = computeSearch(), n = computeNPS(), a = computeAI();
+    const cur = currency;
+    const f = (v) => { const abs = Math.abs(Math.round(v)); const s = abs.toLocaleString('en-US'); return v < 0 ? '−' + cur + s : cur + s; };
+    const pct = (v, d) => (v * 100).toFixed(d !== undefined ? d : 1) + '%';
+
+    const totalY1 = (enabled.support ? s.years[0].netSavings : 0) + (enabled.search ? e.years[0].net : 0) + (enabled.nps ? n.annualIncremental : 0) + (enabled.ai ? a.annualSavings : 0);
+    const totalCF = [0,1,2].map(i => (enabled.support ? s.cashflows[i] : 0) + (enabled.search ? e.cashflows[i] : 0) + (enabled.nps ? n.cashflows[i] : 0) + (enabled.ai ? a.cashflows[i] : 0));
+    const totalNPV = npv(totalCF, discountRate);
+
+    let md = '';
+    md += `# DevRev Computer — Benefits Analysis\n\n`;
+    md += `**Prepared for:** ${company}  \n`;
+    md += `**Date:** ${date}  \n`;
+    md += `**Currency:** ${cur}  \n`;
+    md += `**NPV discount rate:** ${(discountRate * 100).toFixed(1)}%  \n\n`;
+    md += `> **Disclaimer:** This analysis was produced using a personal benefits calculator created by Rik Van Bruggen. It is not endorsed by, affiliated with, or supported by DevRev, Inc. All estimates are illustrative and intended for directional planning only.\n\n`;
+    md += `---\n\n`;
+
+    // Executive summary
+    md += `## Executive Summary\n\n`;
+    md += `This document quantifies the projected financial benefits of implementing DevRev Computer for ${company}. The analysis covers four value drivers: support case automation, enterprise search productivity, customer satisfaction improvements, and AI tool consolidation.\n\n`;
+    md += `| Benefit Category | Year 1 Value | 3-Year NPV | Included |\n`;
+    md += `|:---|---:|---:|:---:|\n`;
+    md += `| Support — Case automation | ${f(s.years[0].netSavings)} | ${f(s.npv)} | ${enabled.support ? '✓' : '—'} |\n`;
+    md += `| Enterprise search | ${f(e.years[0].net)} | ${f(e.npv)} | ${enabled.search ? '✓' : '—'} |\n`;
+    md += `| Customer satisfaction (NPS) | ${f(n.annualIncremental)} | ${f(n.npv)} | ${enabled.nps ? '✓' : '—'} |\n`;
+    md += `| AI centralization | ${f(a.annualSavings)} | ${f(a.npv)} | ${enabled.ai ? '✓' : '—'} |\n`;
+    md += `| **Total (selected)** | **${f(totalY1)}** | **${f(totalNPV)}** | |\n\n`;
+    md += `Over a three-year horizon, the projected net present value of DevRev adoption for ${company} is **${f(totalNPV)}**, with a first-year benefit of **${f(totalY1)}**.\n\n`;
+    md += `---\n\n`;
+
+    // Module 1: Support
+    md += `## 1. Support — Case Automation & FTE Savings\n\n`;
+    md += `### Rationale\n\n`;
+    md += `As ${company}'s customer base grows, support case volumes increase proportionally. Without automation, this requires a linear increase in support headcount, driving up operating costs. DevRev's AI-powered case automation deflects a growing percentage of incoming cases, allowing the support organization to handle rising volumes without proportionally increasing staff. The net benefit is the salary cost of FTEs that would otherwise need to be hired, minus the cost of the DevRev platform.\n\n`;
+    md += `### Assumptions\n\n`;
+    md += `- Current monthly case volume: **${fmtNum(getInput('sup','currentMonthlyCases'))}** cases\n`;
+    md += `- Annual case growth rate: **${getInput('sup','annualGrowthRate')}%**\n`;
+    md += `- Fully loaded cost per support FTE: **${f(getInput('sup','costPerFTE'))}** per year\n`;
+    md += `- Cases handled per FTE per year: **${fmtNum(getInput('sup','casesPerFTE'))}**\n`;
+    md += `- Automation rates: **${getInput('sup','autoY1')}%** (Y1), **${getInput('sup','autoY2')}%** (Y2), **${getInput('sup','autoY3')}%** (Y3)\n`;
+    md += `- DevRev setup cost: **${f(getInput('sup','setupCost'))}** (Year 1 only)\n`;
+    md += `- DevRev annual platform cost: **${f(getInput('sup','annualCost'))}**\n\n`;
+    md += `### Projected Impact\n\n`;
+    md += `| Metric | Year 1 | Year 2 | Year 3 |\n`;
+    md += `|:---|---:|---:|---:|\n`;
+    md += `| Yearly case volume | ${fmtNum(s.years[0].yearlyCases)} | ${fmtNum(s.years[1].yearlyCases)} | ${fmtNum(s.years[2].yearlyCases)} |\n`;
+    md += `| Automated cases | ${fmtNum(s.years[0].automated)} | ${fmtNum(s.years[1].automated)} | ${fmtNum(s.years[2].automated)} |\n`;
+    md += `| Human-handled cases | ${fmtNum(s.years[0].human)} | ${fmtNum(s.years[1].human)} | ${fmtNum(s.years[2].human)} |\n`;
+    md += `| FTE required (no automation) | ${s.years[0].fteNoAuto} | ${s.years[1].fteNoAuto} | ${s.years[2].fteNoAuto} |\n`;
+    md += `| FTE required (with automation) | ${s.years[0].fteWithAuto} | ${s.years[1].fteWithAuto} | ${s.years[2].fteWithAuto} |\n`;
+    md += `| FTE savings | ${s.years[0].fteSavings} | ${s.years[1].fteSavings} | ${s.years[2].fteSavings} |\n`;
+    md += `| Salary savings | ${f(s.years[0].salarySavings)} | ${f(s.years[1].salarySavings)} | ${f(s.years[2].salarySavings)} |\n`;
+    md += `| DevRev cost | ${f(s.years[0].devrevCost)} | ${f(s.years[1].devrevCost)} | ${f(s.years[2].devrevCost)} |\n`;
+    md += `| **Net savings** | **${f(s.years[0].netSavings)}** | **${f(s.years[1].netSavings)}** | **${f(s.years[2].netSavings)}** |\n\n`;
+    md += `**Cumulative 3-year net savings:** ${f(s.cumulative)}  \n`;
+    md += `**3-year NPV:** ${f(s.npv)}\n\n`;
+    md += `### How the Calculation Works\n\n`;
+    md += `For each year, the total case volume is projected by applying the annual growth rate to the base volume. The automation percentage determines how many cases are handled without human intervention. The FTE requirement is calculated by dividing the remaining human-handled cases by the per-FTE throughput. The difference in FTE between the "no automation" and "with automation" scenarios, multiplied by the fully loaded salary cost, yields the gross salary savings. Subtracting the DevRev platform cost (including one-time setup in Year 1) gives the net savings.\n\n`;
+    md += `---\n\n`;
+
+    // Module 2: Search
+    md += `## 2. Enterprise Search — Productivity, Collaboration & Decision Quality\n\n`;
+    md += `### Rationale\n\n`;
+    md += `Knowledge workers spend a significant portion of their day searching for information across disparate systems, duplicating work that colleagues have already completed, and making decisions with incomplete data. DevRev's unified enterprise search consolidates information retrieval, reducing time wasted searching, eliminating duplicate effort, and improving the quality and speed of business decisions. The value is realized across three components: direct time savings, reduced duplication, and better decision outcomes.\n\n`;
+    md += `### Assumptions\n\n`;
+    md += `- Knowledge workers: **${fmtNum(getInput('sea','nWorkers'))}**\n`;
+    md += `- Hourly cost per worker: **${f(getInput('sea','hourlyCost'))}**\n`;
+    md += `- Working days per year: **${getInput('sea','workdays')}**\n`;
+    md += `- Hours per day spent searching: **${getInput('sea','hoursSearch')}**\n`;
+    md += `- Time saved through better search: **${getInput('sea','searchGain')}%**\n`;
+    md += `- Duplicate work hours per worker per month: **${getInput('sea','dupHours')}**\n`;
+    md += `- Duplication reduction: **${getInput('sea','dupReduction')}%**\n`;
+    md += `- Business decisions per month: **${fmtNum(getInput('sea','decisions'))}**\n`;
+    md += `- Average value per decision: **${f(getInput('sea','decisionValue'))}**\n`;
+    md += `- Decision quality improvement: **${getInput('sea','decisionGain')}%**\n`;
+    md += `- Adoption rates: **${getInput('sea','adoptY1')}%** (Y1), **${getInput('sea','adoptY2')}%** (Y2), **${getInput('sea','adoptY3')}%** (Y3)\n`;
+    md += `- Implementation cost: **${f(getInput('sea','onetime'))}** (Year 1 only)\n`;
+    md += `- Annual license: **${f(getInput('sea','license'))}**\n`;
+    md += `- Change management: **${f(getInput('sea','changeMgmt'))}** per year\n\n`;
+    md += `### Base Value Components\n\n`;
+    md += `| Component | Annual Value |\n`;
+    md += `|:---|---:|\n`;
+    md += `| Productivity gain (time saved searching) | ${f(e.productivity)} |\n`;
+    md += `| Collaboration efficiency (reduced duplication) | ${f(e.collaboration)} |\n`;
+    md += `| Decision quality & speed | ${f(e.decision)} |\n`;
+    md += `| **Base value at 100% adoption** | **${f(e.baseValue)}** |\n\n`;
+    md += `### Adoption-Adjusted Projection\n\n`;
+    md += `| Metric | Year 1 | Year 2 | Year 3 |\n`;
+    md += `|:---|---:|---:|---:|\n`;
+    md += `| Adoption | ${pct(e.years[0].adoption,0)} | ${pct(e.years[1].adoption,0)} | ${pct(e.years[2].adoption,0)} |\n`;
+    md += `| Adjusted value | ${f(e.years[0].adjustedValue)} | ${f(e.years[1].adjustedValue)} | ${f(e.years[2].adjustedValue)} |\n`;
+    md += `| Total cost | ${f(e.years[0].cost)} | ${f(e.years[1].cost)} | ${f(e.years[2].cost)} |\n`;
+    md += `| **Net value** | **${f(e.years[0].net)}** | **${f(e.years[1].net)}** | **${f(e.years[2].net)}** |\n\n`;
+    md += `**Cumulative 3-year net value:** ${f(e.cumulative)}  \n`;
+    md += `**3-year NPV:** ${f(e.npv)}\n\n`;
+    md += `### How the Calculation Works\n\n`;
+    md += `The base value sums three independent benefit streams: (1) time savings from faster information retrieval, calculated as workers × hourly cost × daily search hours × working days × percentage improvement; (2) reduced duplication, calculated as workers × hourly cost × monthly duplicate hours × 12 months × reduction percentage; and (3) decision quality improvements, calculated as monthly decisions × value per decision × 12 months × improvement percentage. The base value is then scaled by the expected adoption rate for each year, and the annual platform and change management costs are subtracted.\n\n`;
+    md += `---\n\n`;
+
+    // Module 3: NPS
+    md += `## 3. Customer Satisfaction — NPS-Driven Retention & Referral Revenue\n\n`;
+    md += `### Rationale\n\n`;
+    md += `Improving customer experience through faster, more effective support and better self-service has a measurable impact on Net Promoter Score (NPS). Higher NPS correlates with improved customer retention (lower churn) and increased referral-driven new customer acquisition. Even modest NPS improvements translate to meaningful revenue gains when applied across a large customer base, as each retained customer continues to generate recurring revenue and each referral represents new revenue acquired at near-zero marketing cost.\n\n`;
+    md += `### Assumptions\n\n`;
+    md += `- Current customer base: **${fmtNum(getInput('nps','customers'))}**\n`;
+    md += `- Average revenue per user (ARPU): **${f(getInput('nps','arpu'))}** per year\n`;
+    md += `- Current annual churn rate: **${getInput('nps','churn')}%**\n`;
+    md += `- Current NPS: **${getInput('nps','currentNps')}**\n`;
+    md += `- Target NPS: **${getInput('nps','targetNps')}**\n`;
+    md += `- Referral uplift per +10 NPS points: **${getInput('nps','referralPer10')}%** of customer base\n`;
+    md += `- CLV uplift per +10 NPS points: **${getInput('nps','clvPer10')}%**\n`;
+    md += `- Retention improvement per +1 NPS point: **${getInput('nps','retentionPer1')} percentage points**\n\n`;
+    md += `### Projected Impact\n\n`;
+    md += `| Metric | Value |\n`;
+    md += `|:---|---:|\n`;
+    md += `| NPS delta (target − current) | +${n.delta} |\n`;
+    md += `| Retention improvement | ${pct(n.retentionImprovement, 2)} |\n`;
+    md += `| New churn rate | ${pct(n.newChurn, 2)} |\n`;
+    md += `| Referral growth | ${pct(n.referralGrowth, 2)} |\n`;
+    md += `| CLV uplift factor | ${n.clvUplift.toFixed(3)}× |\n`;
+    md += `| Customers retained per year | ${fmtNum(n.customersRetained)} |\n`;
+    md += `| Revenue from retention | ${f(n.retentionRevenue)} |\n`;
+    md += `| New customers from referrals | ${fmtNum(n.newReferralCustomers)} |\n`;
+    md += `| Revenue from referrals | ${f(n.referralRevenue)} |\n`;
+    md += `| **Annual incremental revenue** | **${f(n.annualIncremental)}** |\n\n`;
+    md += `**3-year NPV of incremental revenue:** ${f(n.npv)}\n\n`;
+    md += `### How the Calculation Works\n\n`;
+    md += `The NPS delta drives three effects: (1) retention improvement, where each NPS point reduces churn by a fixed number of percentage points, translating to additional retained customers × ARPU; (2) referral growth, where higher NPS drives word-of-mouth acquisition proportional to the existing customer base; and (3) CLV uplift, reflecting that more satisfied customers tend to expand their usage over time. The annual incremental revenue from retention and referrals is treated as a recurring cash flow and discounted over the three-year horizon.\n\n`;
+    md += `---\n\n`;
+
+    // Module 4: AI
+    md += `## 4. AI Centralization — Consolidation Savings\n\n`;
+    md += `### Rationale\n\n`;
+    md += `Many organizations have accumulated a patchwork of AI-powered tools across departments — copilots for productivity, AI agents for customer service, intelligent assistants for sales and marketing. Each tool carries its own per-user licensing cost, and the integration overhead of maintaining data flows between them adds further expense. DevRev's unified AI platform replaces this fragmented stack with a single subscription, eliminating redundant licensing and integration costs while providing a consistent AI experience across all functions.\n\n`;
+    md += `### Scenario A — Fragmented AI Stack (Current State)\n\n`;
+    md += `| Tool | Annual Cost |\n`;
+    md += `|:---|---:|\n`;
+    md += `| Microsoft 365 Copilot | ${f(a.copilotCost)} |\n`;
+    md += `| Salesforce Agentforce | ${f(a.agentforceCost)} |\n`;
+    md += `| Zendesk AI Agents | ${f(a.zendeskCost)} |\n`;
+    md += `| HubSpot Breeze AI | ${f(a.hubspotCost)} |\n`;
+    md += `| Freshworks Freddy AI | ${f(a.freddyCost)} |\n`;
+    md += `| Integration & glue | ${f(a.integ)} |\n`;
+    md += `| **Total Scenario A** | **${f(a.scenarioA)}** |\n\n`;
+    md += `### Scenario B — DevRev Centralized\n\n`;
+    md += `| Tool | Annual Cost |\n`;
+    md += `|:---|---:|\n`;
+    md += `| DevRev AI platform | ${f(a.devrevCost)} |\n\n`;
+    md += `### Cost Avoidance\n\n`;
+    md += `| | Amount |\n`;
+    md += `|:---|---:|\n`;
+    md += `| Annual cost avoidance (A − B) | **${f(a.annualSavings)}** |\n`;
+    md += `| 3-year NPV | **${f(a.npv)}** |\n\n`;
+    md += `### How the Calculation Works\n\n`;
+    md += `The annual cost of the fragmented stack (Scenario A) is the sum of all individual tool costs — each computed as price × quantity × 12 months — plus a flat integration overhead. The DevRev centralized cost (Scenario B) is a single per-user monthly fee × number of users × 12 months. The cost avoidance is simply the difference between the two scenarios, treated as a recurring annual saving and discounted over three years for the NPV.\n\n`;
+    md += `---\n\n`;
+
+    // Methodology
+    md += `## Methodology Notes\n\n`;
+    md += `- **NPV calculation:** All future cash flows are discounted at ${pct(discountRate,1)} per year. Year 1 is discounted by (1+r), Year 2 by (1+r)², Year 3 by (1+r)³.\n`;
+    md += `- **Conservative approach:** Automation rates and adoption percentages are phased over three years to reflect realistic rollout timelines.\n`;
+    md += `- **Customizable inputs:** All assumptions used in this analysis are adjustable. The figures above reflect the specific parameters chosen for ${company}.\n`;
+    md += `- This analysis was generated using the DevRev Benefits Calculator v0.1.0, a personal project by Rik Van Bruggen.\n`;
+
+    // Download
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `DevRev_Benefits_${company.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.md`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('btn-xlsx').addEventListener('click', exportXLSX);
+  document.getElementById('btn-md').addEventListener('click', exportMarkdown);
 
   currency = document.getElementById('currency-select').value;
   discountRate = (parseFloat(document.getElementById('discount-rate').value) || 0) / 100;
