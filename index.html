@@ -16,9 +16,12 @@ body{color:var(--tx);background:#f0f0f3;min-height:100vh;font-family:Inter,sans-
 .hero h1 .l1{color:var(--pur);display:block}
 .hero h1 .l2{color:#fff;display:block}
 .controls{display:flex;justify-content:flex-end;gap:14px;margin-bottom:1rem;flex-wrap:wrap;padding:0 .25rem;align-items:flex-end}
-.btn-print{border:1.5px solid var(--pur);background:var(--pur);color:#fff;border-radius:8px;padding:8px 16px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:all .15s;height:33px;white-space:nowrap}
-.btn-print:hover{background:#7547e6;border-color:#7547e6}
-.btn-print:active{transform:translateY(1px)}
+.export-group{display:flex;align-items:center;gap:6px;height:33px}
+.export-label{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.btn-exp{border:1.5px solid var(--pur);background:var(--pur);color:#fff;border-radius:6px;padding:5px 12px;font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.03em;transition:all .15s;white-space:nowrap;line-height:1}
+.btn-exp:hover{background:#7547e6;border-color:#7547e6}
+.btn-exp:active{transform:translateY(1px)}
+.export-toast{font-size:11px;font-weight:600;color:var(--grn);opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
 .print-meta{display:none}
 .tb-field{display:flex;flex-direction:column;gap:3px}
 .tb-field label{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
@@ -146,9 +149,6 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
 .disclaimer-side.left{left:0;transform:translateY(-50%) rotate(180deg);border-radius:6px 6px 0 0}
 .disclaimer-side.right{right:0;transform:translateY(-50%);border-radius:0 0 6px 6px}
 .version-tag{margin-top:10px;text-align:right;font-size:10px;color:var(--hi);font-weight:600;letter-spacing:.04em}
-.btn-export{border:1.5px solid var(--pur);background:#fff;color:var(--pur);border-radius:8px;padding:8px 16px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:all .15s;height:33px;white-space:nowrap}
-.btn-export:hover{background:var(--pur);color:#fff}
-.btn-export:active{transform:translateY(1px)}
 
 @media(max-width:760px){
   .hero{padding:1.5rem 1.5rem}
@@ -166,7 +166,7 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
   @page{size:A4;margin:12mm 14mm}
   body{background:#fff!important;font-size:11px}
   .page{max-width:100%;padding:0}
-  .controls,.btn-print,.btn-export{display:none!important}
+  .controls,.export-group{display:none!important}
   .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact;margin-bottom:.4rem;padding:1.1rem 1.4rem;border-radius:10px}
   .hero h1{font-size:1.8rem}
   .hero::after{opacity:.5}
@@ -209,9 +209,13 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
     <div class="tb-field"><label>Company</label><input id="company-name" type="text" value="Acme Corp" /></div>
     <div class="tb-field"><label>Currency</label><select id="currency-select"><option value="€">€ EUR</option><option value="$">$ USD</option><option value="£">£ GBP</option></select></div>
     <div class="tb-field"><label>NPV discount rate</label><input id="discount-rate" type="number" value="5" step="0.5" min="0" max="30" /></div>
-    <button class="btn-print" id="btn-print" type="button">Export as PDF</button>
-    <button class="btn-export" id="btn-xlsx" type="button">Export as Excel</button>
-    <button class="btn-export" id="btn-md" type="button">Export as Markdown</button>
+    <div class="export-group">
+      <span class="export-label">Export:</span>
+      <button class="btn-exp" id="btn-print" type="button">PDF</button>
+      <button class="btn-exp" id="btn-xlsx" type="button">XL</button>
+      <button class="btn-exp" id="btn-md" type="button">MD</button>
+      <span class="export-toast" id="export-toast"></span>
+    </div>
   </div>
 
   <div class="selector-label">Include in total benefit — click to toggle</div>
@@ -496,7 +500,7 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
       <li><strong>NPS</strong>: treats incremental retention + referral revenue as a recurring annual cash flow, discounted over the horizon.</li>
       <li><strong>AI centralization</strong>: compares annual run-rate of a fragmented AI stack against a single DevRev subscription for the same population.</li>
     </ul>
-    <div class="version-tag">v0.1.0</div>
+    <div class="version-tag">v0.2.0</div>
   </div>
 
 </div>
@@ -763,12 +767,21 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
     });
   });
 
+  function showToast(msg) {
+    const el = document.getElementById('export-toast');
+    el.textContent = msg;
+    el.style.opacity = '1';
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => { el.style.opacity = '0'; }, 2500);
+  }
+
   document.getElementById('btn-print').addEventListener('click', () => {
     const company = document.getElementById('company-name').value.trim() || '—';
     const date = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
     document.getElementById('print-company').textContent = company;
     document.getElementById('print-date').textContent = date;
     window.print();
+    showToast('✓ PDF downloaded');
   });
 
   // ── Excel export (pure JS XLSX via SheetJS-style XML spreadsheet) ──
@@ -953,9 +966,10 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
     link.download = `DevRev_Benefits_${company.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.xls`;
     link.click();
     URL.revokeObjectURL(url);
+    showToast('✓ Excel downloaded');
   }
 
-  // ── Markdown export ──
+  // ── Markdown export (copy to clipboard) ──
   function exportMarkdown() {
     const company = document.getElementById('company-name').value.trim() || 'Company';
     const date = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
@@ -1122,16 +1136,13 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
     md += `- **NPV calculation:** All future cash flows are discounted at ${pct(discountRate,1)} per year. Year 1 is discounted by (1+r), Year 2 by (1+r)², Year 3 by (1+r)³.\n`;
     md += `- **Conservative approach:** Automation rates and adoption percentages are phased over three years to reflect realistic rollout timelines.\n`;
     md += `- **Customizable inputs:** All assumptions used in this analysis are adjustable. The figures above reflect the specific parameters chosen for ${company}.\n`;
-    md += `- This analysis was generated using the DevRev Benefits Calculator v0.1.0, a personal project by Rik Van Bruggen.\n`;
+    md += `- This analysis was generated using the DevRev Benefits Calculator v0.2.0, a personal project by Rik Van Bruggen.\n`;
 
-    // Download
-    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `DevRev_Benefits_${company.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.md`;
-    link.click();
-    URL.revokeObjectURL(url);
+    navigator.clipboard.writeText(md).then(() => {
+      showToast('✓ Markdown copied to clipboard');
+    }).catch(() => {
+      showToast('⚠ Copy failed — try again');
+    });
   }
 
   document.getElementById('btn-xlsx').addEventListener('click', exportXLSX);
