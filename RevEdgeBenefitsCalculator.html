@@ -234,6 +234,7 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
 
   <div class="print-meta">
     <span>Prepared for <strong id="print-company">—</strong></span>
+    <span>by RevEdge — revedge.eu</span>
     <span id="print-date"></span>
   </div>
 
@@ -896,6 +897,8 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
       [],
       ['Cumulative 3-year net savings', rawNum(s.cumulative)],
       ['3-year NPV', rawNum(s.npv)],
+      [],
+      ['Provided by RevEdge (revedge.eu) — Official DevRev GTM Partner in EMEA'],
     ]});
 
     // Search sheet
@@ -932,6 +935,8 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
       [],
       ['Cumulative 3-year net value', rawNum(e.cumulative)],
       ['3-year NPV', rawNum(e.npv)],
+      [],
+      ['Provided by RevEdge (revedge.eu) — Official DevRev GTM Partner in EMEA'],
     ]});
 
     // NPS sheet
@@ -961,6 +966,8 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
       ['Annual incremental revenue', rawNum(n.annualIncremental)],
       [],
       ['3-year NPV', rawNum(n.npv)],
+      [],
+      ['Provided by RevEdge (revedge.eu) — Official DevRev GTM Partner in EMEA'],
     ]});
 
     // AI sheet
@@ -981,6 +988,8 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
       [],
       ['Annual cost avoidance (A − B)', rawNum(a.annualSavings)],
       ['3-year NPV', rawNum(a.npv)],
+      [],
+      ['Provided by RevEdge (revedge.eu) — Official DevRev GTM Partner in EMEA'],
     ]});
 
     // Build XML Spreadsheet 2003
@@ -1016,7 +1025,7 @@ input[type=number]:focus{border-color:var(--pur);outline:none}
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `DevRev_Benefits_${company.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.xls`;
+    link.download = `RevEdge_DevRev_Benefits_${company.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.xls`;
     link.click();
     URL.revokeObjectURL(url);
     showToast('✓ Excel downloaded');
