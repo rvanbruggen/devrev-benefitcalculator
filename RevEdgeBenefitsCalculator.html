@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RevEdge — DevRev Benefits Calculator</title>
+<style>
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
+:root{--lime:#0930EF;--lime-bg:rgba(9,48,239,0.12);--lime-bd:rgba(9,48,239,0.3);--lime-dark:#8ab4ff;--pur:#0930EF;--pur-bg:rgba(9,48,239,0.12);--pur-bd:rgba(9,48,239,0.3);--grn:#4ade80;--grn-bg:rgba(74,222,128,0.12);--grn-bd:rgba(74,222,128,0.3);--org:#fb923c;--org-bg:rgba(251,146,60,0.12);--org-bd:rgba(251,146,60,0.3);--blu:#60a5fa;--blu-bg:rgba(96,165,250,0.12);--blu-bd:rgba(96,165,250,0.3);--sur:#191c28;--bd:rgba(255,255,255,0.12);--bhi:rgba(255,255,255,0.2);--tx:#ffffff;--mu:#9b9ea8;--hi:#555560}
+*{box-sizing:border-box;margin:0;padding:0}
+body{color:var(--tx);background:#000311;min-height:100vh;font-family:Inter,sans-serif;font-size:14px}
+.page{max-width:920px;margin:0 auto;padding:1.5rem 1.5rem 5rem}
+.hero{background:linear-gradient(135deg, #000311 0%, #0a1033 50%, #0930EF20 100%);border:1px solid rgba(9,48,239,0.25);border-radius:14px;padding:2.5rem 2.5rem;margin-bottom:.9rem;position:relative;overflow:hidden;text-align:center}
+.hero::after{content:"";position:absolute;right:0;top:0;width:38%;height:100%;background-image:radial-gradient(circle,rgba(9,48,239,.15) 1.4px,transparent 1.9px);background-size:16px 16px;pointer-events:none}
+.hero-logo{position:relative;z-index:1;margin-bottom:1rem}
+.hero-logo img{height:36px;width:auto}
+.hero h1{font-size:2.4rem;line-height:1.1;font-weight:800;letter-spacing:-.02em;position:relative;z-index:1;margin:0 0 0.5rem;font-family:Inter,sans-serif;color:#fff}
+.hero .hero-subtitle{color:#9b9ea8;font-size:14px;font-weight:600;letter-spacing:.04em;position:relative;z-index:1;margin-bottom:1rem}
+.hero .hero-intro{color:#9b9ea8;font-size:13px;line-height:1.65;position:relative;z-index:1;max-width:680px;margin:0 auto}
+.controls{display:flex;justify-content:flex-end;gap:14px;margin-bottom:1rem;flex-wrap:wrap;padding:0 .25rem;align-items:flex-end}
+.export-group{display:flex;align-items:center;gap:6px;height:33px}
+.export-label{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.btn-exp{border:1.5px solid var(--pur);background:var(--pur);color:#fff;border-radius:6px;padding:5px 12px;font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.03em;transition:all .15s;white-space:nowrap;line-height:1}
+.btn-exp:hover{background:#3716FF;border-color:#3716FF}
+.btn-exp:active{transform:translateY(1px)}
+.export-toast{font-size:11px;font-weight:600;color:var(--grn);opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
+.print-meta{display:none}
+.tb-field{display:flex;flex-direction:column;gap:3px}
+.tb-field label{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.tb-field input,.tb-field select{border:1.5px solid var(--bd);background:#1a1d29;border-radius:8px;padding:6px 10px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);min-width:140px}
+.tb-field input:focus,.tb-field select:focus{border-color:var(--pur);outline:none}
+.tb-field input[type=number]{max-width:100px;min-width:80px}
+.tb-field select option{background:#1a1d29;color:var(--tx)}
+.selector-label{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px;padding-left:2px}
+
+.card{border:1px solid var(--bd);background:rgba(255,255,255,0.07);border-radius:12px;margin-bottom:.9rem;padding:1.2rem 1.5rem}
+.card.c-lime{border-top:3px solid var(--pur)}
+.card.c-pur{border-top:3px solid var(--pur)}
+.card.c-grn{border-top:3px solid var(--grn)}
+.card.c-org{border-top:3px solid var(--org)}
+.card.c-blu{border-top:3px solid var(--blu)}
+.sthdr{justify-content:space-between;align-items:flex-start;margin-bottom:.9rem;display:flex;flex-wrap:wrap;gap:8px}
+.sttitle{color:var(--hi);text-transform:uppercase;letter-spacing:.1em;font-size:10px;font-weight:700}
+.sttitle-big{color:var(--tx);font-size:14px;font-weight:700;letter-spacing:-.01em;margin-top:2px}
+.st-right{display:flex;gap:18px;align-items:baseline}
+.st-right .stv{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.st-right .stv.pur{color:var(--pur)}
+.st-right .stv.grn{color:var(--grn)}
+.st-right .stv.org{color:var(--org)}
+.st-right .stv.blu{color:var(--blu)}
+.st-right .stl{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-right:6px}
+
+.ib{flex-direction:column;gap:4px;display:flex}
+.il{color:var(--mu);font-size:12px;font-weight:500}
+.il .hint{color:var(--hi);font-size:10px;font-weight:400;display:block}
+input[type=number]{border:1.5px solid var(--bd);color:var(--tx);-moz-appearance:textfield;background:#1a1d29;border-radius:8px;padding:8px 11px;font-family:Inter,sans-serif;font-size:13px;transition:border .15s;width:100%}
+input[type=number]:focus{border-color:var(--pur);outline:none}
+.ig2{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;display:grid}
+.ig3{grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;display:grid}
+
+.group-label{color:var(--hi);text-transform:uppercase;letter-spacing:.06em;font-size:10px;font-weight:700;margin:14px 0 6px;border-top:1px dashed var(--bd);padding-top:10px}
+.group-label:first-child{margin-top:0;border-top:none;padding-top:0}
+
+.bt{border-collapse:collapse;table-layout:fixed;width:100%;font-size:12px}
+.bt thead td{color:var(--hi);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bhi);padding:4px 6px;font-size:10px;font-weight:700}
+.bt thead td.rv{text-align:right}
+.bt tbody tr{border-top:1px solid var(--bd)}
+.bt tbody tr:first-child{border-top:none}
+.bt tbody td{color:var(--mu);vertical-align:middle;padding:6px}
+.bt tbody td.rv{text-align:right;color:var(--tx);font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.bt tfoot tr{border-top:1.5px solid var(--bhi)}
+.bt tfoot td{color:var(--tx);padding:7px 6px;font-size:13px;font-weight:700}
+.bt tfoot td.rv{text-align:right;color:var(--pur);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.callout{background:var(--pur-bg);border:1px solid var(--pur-bd);border-radius:8px;padding:10px 13px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.callout.grn{background:var(--grn-bg);border-color:var(--grn-bd)}
+.callout.org{background:var(--org-bg);border-color:var(--org-bd)}
+.callout.blu{background:var(--blu-bg);border-color:var(--blu-bd)}
+.callout .cl-lbl{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.callout .cl-val{font-size:16px;font-weight:700;color:var(--pur);font-variant-numeric:tabular-nums}
+.callout.grn .cl-val{color:var(--grn)}
+.callout.org .cl-val{color:var(--org)}
+.callout.blu .cl-val{color:var(--blu)}
+
+.gg{grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:1rem;display:grid}
+.gc{border:1px solid;border-radius:9px;padding:12px 14px;cursor:pointer;-webkit-user-select:none;user-select:none;transition:transform .12s,opacity .15s,filter .15s;position:relative}
+.gc:hover{transform:translateY(-1px)}
+.gc:active{transform:translateY(0)}
+.gc.off{filter:grayscale(1);opacity:.4;background:var(--sur)!important;border-color:var(--bd)!important}
+.gc.off .gl,.gc.off .gv,.gc.off .gsub{color:var(--hi)!important}
+.gc .tgl{position:absolute;top:9px;right:11px;width:14px;height:14px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:rgba(255,255,255,0.1);border:1.5px solid currentColor}
+.gc.off .tgl{background:var(--sur);border-color:var(--hi);color:var(--hi)}
+.gc .tgl::after{content:"\2713";color:currentColor;line-height:1}
+.gc.off .tgl::after{content:""}
+.card.off{opacity:.45;filter:grayscale(.85);transition:opacity .15s,filter .15s}
+.card.off input{pointer-events:none}
+.gc.c-pur{background:var(--pur-bg);border-color:var(--pur-bd)}
+.gc.c-grn{background:var(--grn-bg);border-color:var(--grn-bd)}
+.gc.c-org{background:var(--org-bg);border-color:var(--org-bd)}
+.gc.c-lime{background:var(--pur-bg);border-color:var(--pur-bd)}
+.gc.c-blu{background:var(--blu-bg);border-color:var(--blu-bd)}
+.gl{text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;font-size:10px;font-weight:700}
+.gc.c-pur .gl{color:var(--pur)}
+.gc.c-grn .gl{color:var(--grn)}
+.gc.c-org .gl{color:var(--org)}
+.gc.c-lime .gl{color:var(--pur)}
+.gc.c-blu .gl{color:var(--blu)}
+.gv{font-variant-numeric:tabular-nums;font-size:17px;font-weight:700}
+.gc.c-pur .gv{color:var(--pur)}
+.gc.c-grn .gv{color:var(--grn)}
+.gc.c-org .gv{color:var(--org)}
+.gc.c-lime .gv{color:var(--pur)}
+.gc.c-blu .gv{color:var(--blu)}
+.gsub{opacity:.7;margin-top:2px;font-size:11px}
+.gc.c-pur .gsub{color:var(--pur)}
+.gc.c-grn .gsub{color:var(--grn)}
+.gc.c-org .gsub{color:var(--org)}
+.gc.c-lime .gsub{color:var(--pur)}
+.gc.c-blu .gsub{color:var(--blu)}
+
+.fb{border:2px solid var(--pur);background:var(--pur-bg);border-radius:13px;padding:1.4rem 1.5rem;margin-bottom:1rem}
+.fb-row{display:flex;gap:3rem;align-items:flex-start;flex-wrap:wrap}
+.fb-col{flex:1;min-width:200px}
+.fb-lbl{color:var(--pur);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-size:10px;font-weight:700}
+.fb-val{color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums;font-size:32px;font-weight:700}
+.fb-sub{color:var(--mu);opacity:.7;margin-top:4px;font-size:12px}
+
+.two-col{grid-template-columns:1fr 1fr;gap:1.2rem;display:grid}
+
+.tool-grid{display:grid;grid-template-columns:2fr 70px 70px 1fr;gap:6px 10px;font-size:12px;margin-bottom:8px;align-items:center}
+.tool-grid .col-head{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--hi);font-weight:700;padding-bottom:4px;border-bottom:1px solid var(--bd)}
+.tool-grid .col-head.num{text-align:right}
+.tool-grid .tool-name{color:var(--mu);font-size:12px;padding:4px 0}
+.tool-grid .tool-name .tu{display:block;font-size:10px;color:var(--hi);margin-top:1px}
+.tool-grid input{text-align:right;padding:6px 8px;font-size:12px}
+.tool-grid .annual-cost{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--tx);font-size:12px}
+.scenario-label{font-weight:700;color:var(--tx);text-transform:uppercase;letter-spacing:.06em;font-size:10px;margin:10px 0 6px}
+
+.fn{color:var(--hi);border-top:1px solid var(--bd);margin-top:1rem;padding-top:12px;font-size:11px;line-height:1.9}
+.fn strong{color:var(--mu)}
+.fn ul{margin-left:18px;margin-top:4px}
+.fn li{margin-bottom:2px}
+.fn code{background:var(--sur);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:10px}
+
+.footer-bar{background:rgba(255,255,255,0.04);color:var(--mu);text-align:center;padding:12px 16px;font-size:11px;font-weight:500;letter-spacing:.02em;line-height:1.5;border-top:1px solid var(--bd);margin-top:0}
+.footer-bar a{color:var(--pur);text-decoration:none}
+.footer-bar a:hover{text-decoration:underline}
+.version-tag{margin-top:10px;text-align:right;font-size:10px;color:var(--hi);font-weight:600;letter-spacing:.04em}
+
+.mode-bar{display:flex;justify-content:center;gap:0;margin-bottom:.9rem;padding:0 .25rem}
+.mode-toggle{display:inline-flex;border:1.5px solid var(--bd);border-radius:8px;overflow:hidden;background:rgba(255,255,255,0.07)}
+.mode-toggle button{border:none;background:none;padding:8px 22px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;color:var(--mu);cursor:pointer;transition:all .15s;letter-spacing:.02em;position:relative}
+.mode-toggle button.active{background:var(--pur);color:#fff}
+.mode-toggle button:not(.active):hover{background:var(--pur-bg);color:var(--pur)}
+
+.wz-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:8000;pointer-events:none;opacity:0;transition:opacity .3s}
+.wz-overlay.active{opacity:1}
+.wz-highlight{position:relative;z-index:8001;border-radius:12px;box-shadow:0 0 0 6px rgba(9,48,239,.4);transition:box-shadow .3s}
+.wz-panel{position:fixed;bottom:28px;right:28px;width:360px;background:#191c28;border:1px solid var(--bd);border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.5);z-index:8002;padding:22px 26px;font-family:Inter,sans-serif;opacity:0;transform:translateY(20px);transition:opacity .3s,transform .3s;pointer-events:auto}
+.wz-panel.active{opacity:1;transform:translateY(0)}
+.wz-panel .wz-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:18px;color:var(--hi);cursor:pointer;padding:4px;line-height:1}
+.wz-panel .wz-close:hover{color:var(--tx)}
+.wz-panel .wz-step-label{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px}
+.wz-panel .wz-title{font-size:17px;font-weight:700;color:var(--tx);margin-bottom:8px;line-height:1.25}
+.wz-panel .wz-desc{font-size:13px;color:var(--mu);line-height:1.55;margin-bottom:18px}
+.wz-progress{height:4px;background:var(--bd);border-radius:2px;margin-bottom:18px;overflow:hidden}
+.wz-progress-fill{height:100%;background:var(--pur);border-radius:2px;transition:width .35s ease}
+.wz-nav{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.wz-btn{border:1.5px solid var(--pur);background:var(--pur);color:#fff;border-radius:8px;padding:8px 22px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.02em}
+.wz-btn:hover{background:#3716FF;border-color:#3716FF}
+.wz-btn.sec{background:transparent;color:var(--pur)}
+.wz-btn.sec:hover{background:var(--pur-bg)}
+.wz-btn:disabled{opacity:.3;cursor:default;pointer-events:none}
+.wz-dots{display:flex;gap:6px;align-items:center}
+.wz-dot{width:8px;height:8px;border-radius:50%;background:var(--bd);transition:background .25s,transform .25s}
+.wz-dot.active{background:var(--pur);transform:scale(1.25)}
+.wz-dot.done{background:var(--grn)}
+
+@media(max-width:760px){
+  .hero{padding:1.5rem 1.5rem}
+  .hero h1{font-size:1.8rem}
+  .hero::after{width:45%;background-size:12px 12px}
+  .two-col{grid-template-columns:1fr}
+  .gg{grid-template-columns:repeat(2,1fr)}
+  .ig2,.ig3{grid-template-columns:1fr}
+  .fb-row{flex-direction:column;gap:1rem}
+  .topbar{flex-direction:column;align-items:flex-start}
+}
+
+@media print{
+  @page{size:A4;margin:12mm 14mm}
+  body{background:#fff!important;color:#111!important;font-size:11px}
+  .page{max-width:100%;padding:0}
+  .controls,.export-group,.mode-bar,.wz-overlay,.wz-panel{display:none!important}
+  .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact;margin-bottom:.4rem;padding:1.1rem 1.4rem;border-radius:10px;background:#f0f2ff!important;border-color:#ddd!important}
+  .hero h1{font-size:1.8rem;color:#111!important}
+  .hero .hero-subtitle{color:#555!important}
+  .hero .hero-intro{color:#555!important}
+  .hero::after{opacity:.3}
+  .print-meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#555;padding:0 2px;margin-bottom:.9rem}
+  .print-meta strong{color:#111}
+  .card{page-break-inside:avoid;border:1px solid #ddd;margin-bottom:.5rem;padding:.9rem 1.1rem;background:#fff!important;color:#111!important}
+  .card .sttitle-big{color:#111!important}
+  .card .bt tbody td{color:#555!important}
+  .card .bt tbody td.rv{color:#111!important}
+  .card .bt tfoot td{color:#111!important}
+  .card.off{display:none!important}
+  .gc,.fb,.callout{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .gc{cursor:default}
+  .gc .tgl{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .selector-label{font-size:9px}
+  .fb{padding:1rem 1.2rem;background:#f0f2ff!important;border-color:#ddd!important}
+  .fb-val{font-size:26px;color:#111!important}
+  .fb-lbl{color:#0930EF!important}
+  .fn{font-size:10px;line-height:1.6;color:#555!important}
+  .fn strong{color:#333!important}
+  .footer-bar{font-size:9px;padding:5px 10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  input[type=number]{background:#fff!important;color:#111!important;border-color:#ddd!important}
+  .tb-field input,.tb-field select{background:#fff!important;color:#111!important;border-color:#ddd!important}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-logo">
+      <img src="https://cdn.prod.website-files.com/68d0279a615194d9ada0cb5d/68d2affe94e97736b7af518e_logo_1.svg" alt="RevEdge" style="width:160px;height:auto" />
+    </div>
+    <h1>DevRev Benefits Calculator</h1>
+    <div class="hero-subtitle">Powered by RevEdge — Official DevRev GTM Partner in EMEA</div>
+    <p class="hero-intro">At RevEdge, we help organizations unlock the full potential of DevRev's platform. Use this calculator to quantify the expected business impact — from support automation and enterprise search to customer satisfaction and AI consolidation. The results will help you build a compelling internal business case for DevRev adoption.</p>
+  </div>
+
+  <div class="print-meta">
+    <span>Prepared for <strong id="print-company">—</strong></span>
+    <span id="print-date"></span>
+  </div>
+
+  <div class="mode-bar">
+    <div class="mode-toggle">
+      <button class="active" id="mode-manual">Manual Mode</button>
+      <button id="mode-wizard">Guided Wizard</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="tb-field"><label>Company</label><input id="company-name" type="text" value="Acme Corp" /></div>
+    <div class="tb-field"><label>Currency</label><select id="currency-select"><option value="€">€ EUR</option><option value="$">$ USD</option><option value="£">£ GBP</option></select></div>
+    <div class="tb-field"><label>NPV discount rate</label><input id="discount-rate" type="number" value="5" step="0.5" min="0" max="30" /></div>
+    <div class="export-group">
+      <span class="export-label">Export:</span>
+      <button class="btn-exp" id="btn-print" type="button">PDF</button>
+      <button class="btn-exp" id="btn-xlsx" type="button">XL</button>
+      <button class="btn-exp" id="btn-md" type="button">MD</button>
+      <span class="export-toast" id="export-toast"></span>
+    </div>
+  </div>
+
+  <div class="selector-label">Include in total benefit — click to toggle</div>
+  <div class="gg">
+    <div class="gc c-grn" data-module="support"><span class="tgl"></span><div class="gl">Support</div><div class="gv" id="summary-support">—</div><div class="gsub">Year 1 net savings</div></div>
+    <div class="gc c-pur" data-module="search"><span class="tgl"></span><div class="gl">Enterprise search</div><div class="gv" id="summary-search">—</div><div class="gsub">Year 1 net value</div></div>
+    <div class="gc c-org" data-module="nps"><span class="tgl"></span><div class="gl">Customer satisfaction</div><div class="gv" id="summary-nps">—</div><div class="gsub">Annual incremental</div></div>
+    <div class="gc c-blu" data-module="ai"><span class="tgl"></span><div class="gl">AI centralization</div><div class="gv" id="summary-ai">—</div><div class="gsub">Annual cost avoidance</div></div>
+  </div>
+
+  <div class="fb">
+    <div class="fb-row">
+      <div class="fb-col">
+        <div class="fb-lbl">Year 1 annual benefit</div>
+        <div class="fb-val" id="total-annual">€0</div>
+        <div class="fb-sub"><span id="selected-count">4</span> of 4 contributions selected, Year 1</div>
+      </div>
+      <div class="fb-col">
+        <div class="fb-lbl">3-year NPV (discounted)</div>
+        <div class="fb-val" id="total-npv">€0</div>
+        <div class="fb-sub">Net present value over 3 years at <span id="summary-discount">5</span>% discount</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 1: SUPPORT -->
+  <div class="card c-grn" id="mod-support">
+    <div class="sthdr">
+      <div>
+        <div class="sttitle">01 · Support benefits</div>
+        <div class="sttitle-big">Case automation — FTE savings vs. case-volume growth</div>
+      </div>
+      <div class="st-right">
+        <div><span class="stl">Y1 NET</span><span class="stv grn" id="support-y1">—</span></div>
+        <div><span class="stl">3Y NPV</span><span class="stv grn" id="support-npv">—</span></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="group-label">Current state</div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Monthly case volume</label><input data-sup="currentMonthlyCases" type="number" value="1000" /></div>
+          <div class="ib"><label class="il">Annual growth rate (%)</label><input data-sup="annualGrowthRate" type="number" value="10" step="0.5" /></div>
+          <div class="ib"><label class="il">Cost per support FTE<span class="hint">fully loaded annual</span></label><input data-sup="costPerFTE" type="number" value="100000" step="1000" /></div>
+          <div class="ib"><label class="il">Cases per FTE per year</label><input data-sup="casesPerFTE" type="number" value="1200" /></div>
+        </div>
+
+        <div class="group-label">DevRev automation</div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Auto % Y1</label><input data-sup="autoY1" type="number" value="30" /></div>
+          <div class="ib"><label class="il">Auto % Y2</label><input data-sup="autoY2" type="number" value="40" /></div>
+          <div class="ib"><label class="il">Auto % Y3</label><input data-sup="autoY3" type="number" value="50" /></div>
+        </div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Setup cost (Y1 only)</label><input data-sup="setupCost" type="number" value="25000" step="1000" /></div>
+          <div class="ib"><label class="il">DevRev annual cost</label><input data-sup="annualCost" type="number" value="75000" step="1000" /></div>
+        </div>
+      </div>
+
+      <div>
+        <table class="bt">
+          <thead><tr><td></td><td class="rv">Y1</td><td class="rv">Y2</td><td class="rv">Y3</td></tr></thead>
+          <tbody id="support-table"></tbody>
+          <tfoot id="support-foot"></tfoot>
+        </table>
+        <div class="callout grn">
+          <div class="cl-lbl">Cumulative 3-year net savings</div>
+          <div class="cl-val" id="support-cumulative">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 2: SEARCH -->
+  <div class="card c-pur" id="mod-search">
+    <div class="sthdr">
+      <div>
+        <div class="sttitle">02 · Enterprise search benefits</div>
+        <div class="sttitle-big">Productivity, collaboration, and decision-quality gains</div>
+      </div>
+      <div class="st-right">
+        <div><span class="stl">Y1 NET</span><span class="stv pur" id="search-y1">—</span></div>
+        <div><span class="stl">3Y NPV</span><span class="stv pur" id="search-npv">—</span></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="group-label">Workforce</div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Knowledge workers</label><input data-sea="nWorkers" type="number" value="150" /></div>
+          <div class="ib"><label class="il">Hourly cost</label><input data-sea="hourlyCost" type="number" value="60" /></div>
+          <div class="ib"><label class="il">Workdays / year</label><input data-sea="workdays" type="number" value="220" /></div>
+        </div>
+
+        <div class="group-label">Productivity gain</div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Hours / day searching</label><input data-sea="hoursSearch" type="number" value="1.5" step="0.1" /></div>
+          <div class="ib"><label class="il">% time saved</label><input data-sea="searchGain" type="number" value="20" /></div>
+        </div>
+
+        <div class="group-label">Collaboration</div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Dup. hours / month / worker</label><input data-sea="dupHours" type="number" value="5" step="0.5" /></div>
+          <div class="ib"><label class="il">% reduction</label><input data-sea="dupReduction" type="number" value="15" /></div>
+        </div>
+
+        <div class="group-label">Decision quality</div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Decisions / month</label><input data-sea="decisions" type="number" value="10000" /></div>
+          <div class="ib"><label class="il">Value / decision</label><input data-sea="decisionValue" type="number" value="50" /></div>
+          <div class="ib"><label class="il">% improvement</label><input data-sea="decisionGain" type="number" value="10" step="0.5" /></div>
+        </div>
+
+        <div class="group-label">Adoption & cost</div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Adopt. Y1 (%)</label><input data-sea="adoptY1" type="number" value="50" /></div>
+          <div class="ib"><label class="il">Adopt. Y2 (%)</label><input data-sea="adoptY2" type="number" value="75" /></div>
+          <div class="ib"><label class="il">Adopt. Y3 (%)</label><input data-sea="adoptY3" type="number" value="90" /></div>
+        </div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Implementation (Y1)</label><input data-sea="onetime" type="number" value="25000" /></div>
+          <div class="ib"><label class="il">Annual license</label><input data-sea="license" type="number" value="75000" /></div>
+          <div class="ib"><label class="il">Change mgmt / yr</label><input data-sea="changeMgmt" type="number" value="10000" /></div>
+        </div>
+      </div>
+
+      <div>
+        <table class="bt">
+          <thead><tr><td>Base value components</td><td class="rv">Annual</td></tr></thead>
+          <tbody id="search-breakdown"></tbody>
+        </table>
+
+        <table class="bt" style="margin-top:16px">
+          <thead><tr><td>Adoption-adjusted</td><td class="rv">Y1</td><td class="rv">Y2</td><td class="rv">Y3</td></tr></thead>
+          <tbody id="search-year-table"></tbody>
+          <tfoot id="search-foot"></tfoot>
+        </table>
+
+        <div class="callout">
+          <div class="cl-lbl">Cumulative 3-year net value</div>
+          <div class="cl-val" id="search-cumulative">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 3: NPS -->
+  <div class="card c-org" id="mod-nps">
+    <div class="sthdr">
+      <div>
+        <div class="sttitle">03 · Customer satisfaction benefits</div>
+        <div class="sttitle-big">NPS-driven retention and referral revenue</div>
+      </div>
+      <div class="st-right">
+        <div><span class="stl">ANNUAL</span><span class="stv org" id="nps-annual">—</span></div>
+        <div><span class="stl">3Y NPV</span><span class="stv org" id="nps-npv">—</span></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="group-label">Customer base</div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Current customers</label><input data-nps="customers" type="number" value="100000" /></div>
+          <div class="ib"><label class="il">ARPU (annual)</label><input data-nps="arpu" type="number" value="2500" /></div>
+        </div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Current churn (%)</label><input data-nps="churn" type="number" value="40" step="0.5" /></div>
+          <div></div>
+        </div>
+
+        <div class="group-label">NPS improvement</div>
+        <div class="ig2">
+          <div class="ib"><label class="il">Current NPS</label><input data-nps="currentNps" type="number" value="70" /></div>
+          <div class="ib"><label class="il">Target NPS</label><input data-nps="targetNps" type="number" value="75" /></div>
+        </div>
+
+        <div class="group-label">Sensitivity assumptions</div>
+        <div class="ig3">
+          <div class="ib"><label class="il">Referral / +10 NPS (%)</label><input data-nps="referralPer10" type="number" value="5" step="0.5" /></div>
+          <div class="ib"><label class="il">CLV uplift / +10 NPS (%)</label><input data-nps="clvPer10" type="number" value="10" step="0.5" /></div>
+          <div class="ib"><label class="il">Retention / +1 NPS (p.p.)</label><input data-nps="retentionPer1" type="number" value="0.05" step="0.01" /></div>
+        </div>
+      </div>
+
+      <div>
+        <table class="bt">
+          <tbody id="nps-table"></tbody>
+          <tfoot id="nps-foot"></tfoot>
+        </table>
+        <div class="callout org">
+          <div class="cl-lbl">3-year NPV of incremental revenue</div>
+          <div class="cl-val" id="nps-npv-callout">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 4: AI CENTRALIZATION -->
+  <div class="card c-blu" id="mod-ai">
+    <div class="sthdr">
+      <div>
+        <div class="sttitle">04 · AI centralization benefits</div>
+        <div class="sttitle-big">Consolidation savings vs. fragmented point tools</div>
+      </div>
+      <div class="st-right">
+        <div><span class="stl">ANNUAL</span><span class="stv blu" id="ai-annual">—</span></div>
+        <div><span class="stl">3Y NPV</span><span class="stv blu" id="ai-npv">—</span></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="scenario-label" style="color:var(--org)">Scenario A — Fragmented AI stack</div>
+        <div class="tool-grid">
+          <div class="col-head">Tool</div>
+          <div class="col-head num">Price</div>
+          <div class="col-head num">Qty</div>
+          <div class="col-head num">Annual</div>
+
+          <div class="tool-name">Microsoft 365 Copilot<span class="tu">per user / month</span></div>
+          <div><input data-ai="copilotPrice" type="number" value="45" /></div>
+          <div><input data-ai="copilotQty" type="number" value="150" /></div>
+          <div class="annual-cost" data-ai-out="copilotCost">—</div>
+
+          <div class="tool-name">Salesforce Agentforce<span class="tu">per user / month</span></div>
+          <div><input data-ai="agentforcePrice" type="number" value="125" /></div>
+          <div><input data-ai="agentforceQty" type="number" value="0" /></div>
+          <div class="annual-cost" data-ai-out="agentforceCost">—</div>
+
+          <div class="tool-name">Zendesk AI Agents<span class="tu">per agent / month</span></div>
+          <div><input data-ai="zendeskPrice" type="number" value="50" /></div>
+          <div><input data-ai="zendeskQty" type="number" value="0" /></div>
+          <div class="annual-cost" data-ai-out="zendeskCost">—</div>
+
+          <div class="tool-name">HubSpot Breeze AI<span class="tu">per org / month</span></div>
+          <div><input data-ai="hubspotPrice" type="number" value="1000" /></div>
+          <div><input data-ai="hubspotQty" type="number" value="0" /></div>
+          <div class="annual-cost" data-ai-out="hubspotCost">—</div>
+
+          <div class="tool-name">Freshworks Freddy AI<span class="tu">per agent / month</span></div>
+          <div><input data-ai="freddyPrice" type="number" value="20" /></div>
+          <div><input data-ai="freddyQty" type="number" value="150" /></div>
+          <div class="annual-cost" data-ai-out="freddyCost">—</div>
+
+          <div class="tool-name">Integration & glue<span class="tu">flat / year</span></div>
+          <div></div>
+          <div><input data-ai="integrationCost" type="number" value="100000" /></div>
+          <div class="annual-cost" data-ai-out="integrationDisplay">—</div>
+        </div>
+
+        <div class="scenario-label" style="color:var(--blu);margin-top:20px">Scenario B — DevRev Computer (centralized)</div>
+        <div class="tool-grid">
+          <div class="tool-name">DevRev AI platform<span class="tu">per user / month</span></div>
+          <div><input data-ai="devrevPrice" type="number" value="42" /></div>
+          <div><input data-ai="devrevQty" type="number" value="150" /></div>
+          <div class="annual-cost" data-ai-out="devrevCost">—</div>
+        </div>
+      </div>
+
+      <div>
+        <table class="bt">
+          <tbody id="ai-table"></tbody>
+          <tfoot id="ai-foot"></tfoot>
+        </table>
+        <div class="callout blu">
+          <div class="cl-lbl">Annual cost avoidance (A − B)</div>
+          <div class="cl-val" id="ai-annual-callout">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fn">
+    <strong>About this calculator.</strong> This tool is provided by RevEdge (<a href="https://revedge.eu" style="color:var(--pur);text-decoration:none">revedge.eu</a>), official DevRev GTM Partner in EMEA. It estimates the value of a DevRev Computer implementation across four benefit categories for directional planning — not a guarantee. All inputs are editable locally; nothing is sent to a server.
+    <ul>
+      <li><strong>NPV</strong> is calculated over a 3-year horizon at the discount rate set in the header. Year 1 is discounted by (1+r), Year 2 by (1+r)², Year 3 by (1+r)³.</li>
+      <li><strong>Support</strong>: <code>salary_savings = (FTE without automation − FTE with automation) × cost per FTE</code>, minus DevRev cost. Setup cost hits Y1 only.</li>
+      <li><strong>Search</strong>: sums productivity, collaboration, and decision-quality components, then applies annual adoption minus cost.</li>
+      <li><strong>NPS</strong>: treats incremental retention + referral revenue as a recurring annual cash flow, discounted over the horizon.</li>
+      <li><strong>AI centralization</strong>: compares annual run-rate of a fragmented AI stack against a single DevRev subscription for the same population.</li>
+    </ul>
+    <div class="version-tag">v0.3.0</div>
+  </div>
+
+</div>
+
+<div class="footer-bar">Provided by <strong><a href="https://revedge.eu">RevEdge</a></strong> — Official DevRev GTM Partner in EMEA · <a href="https://revedge.eu">revedge.eu</a></div>
+
+<div class="wz-overlay" id="wz-overlay"></div>
+<div class="wz-panel" id="wz-panel">
+  <button class="wz-close" id="wz-close" title="Exit wizard">✕</button>
+  <div class="wz-step-label" id="wz-step-label"></div>
+  <div class="wz-title" id="wz-title"></div>
+  <div class="wz-desc" id="wz-desc"></div>
+  <div class="wz-progress"><div class="wz-progress-fill" id="wz-progress-fill"></div></div>
+  <div class="wz-nav">
+    <button class="wz-btn sec" id="wz-back">← Back</button>
+    <div class="wz-dots" id="wz-dots"></div>
+    <button class="wz-btn" id="wz-next">Next →</button>
+  </div>
+</div>
+
+<script>
+  let currency = '€';
+  let discountRate = 0.10;
+  const enabled = { support: true, search: true, nps: true, ai: true };
+
+  function applyToggles() {
+    document.querySelectorAll('.gc[data-module]').forEach(el => {
+      const m = el.dataset.module;
+      el.classList.toggle('off', !enabled[m]);
+      const card = document.getElementById('mod-' + m);
+      if (card) card.classList.toggle('off', !enabled[m]);
+    });
+  }
+
+  const fmt = (n) => {
+    if (!isFinite(n)) return '—';
+    const sign = n < 0 ? '−' : '';
+    const absN = Math.abs(n);
+    if (absN >= 1e9) return sign + currency + (absN/1e9).toFixed(2) + 'B';
+    if (absN >= 1e6) return sign + currency + (absN/1e6).toFixed(2) + 'M';
+    if (absN >= 1e3) return sign + currency + (absN/1e3).toFixed(0) + 'K';
+    return sign + currency + absN.toFixed(0);
+  };
+  const fmtFull = (n) => {
+    if (!isFinite(n)) return '—';
+    const sign = n < 0 ? '−' : '';
+    return sign + currency + Math.round(Math.abs(n)).toLocaleString('en-US').replace(/,/g, ' ');
+  };
+  const fmtPct = (n, d = 2) => (isFinite(n) ? (n * 100).toFixed(d) + '%' : '—');
+  const fmtNum = (n) => (isFinite(n) ? Math.round(n).toLocaleString('en-US').replace(/,/g, ' ') : '—');
+
+  const getInput = (sel, attr) => {
+    const el = document.querySelector(`input[data-${sel}="${attr}"]`);
+    return el ? parseFloat(el.value) || 0 : 0;
+  };
+  const npv = (cf, rate) => cf.reduce((s, c, i) => s + c / Math.pow(1 + rate, i + 1), 0);
+
+  function computeSupport() {
+    const monthly = getInput('sup','currentMonthlyCases');
+    const growth = getInput('sup','annualGrowthRate') / 100;
+    const costFTE = getInput('sup','costPerFTE');
+    const casesPerFTE = getInput('sup','casesPerFTE') || 1;
+    const setupCost = getInput('sup','setupCost');
+    const annualCost = getInput('sup','annualCost');
+    const autoRates = [getInput('sup','autoY1')/100, getInput('sup','autoY2')/100, getInput('sup','autoY3')/100];
+
+    const yearlyBase = monthly * 12;
+    const years = [0,1,2].map(i => {
+      const yearlyCases = yearlyBase * Math.pow(1 + growth, i + 1);
+      const automated = yearlyCases * autoRates[i];
+      const human = yearlyCases - automated;
+      const fteNoAuto = Math.ceil(yearlyCases / casesPerFTE);
+      const fteWithAuto = Math.ceil(human / casesPerFTE);
+      const fteSavings = fteNoAuto - fteWithAuto;
+      const salarySavings = fteSavings * costFTE;
+      const devrevCost = annualCost + (i === 0 ? setupCost : 0);
+      return { yearlyCases, automated, human, fteNoAuto, fteWithAuto, fteSavings,
+               salarySavings, devrevCost, netSavings: salarySavings - devrevCost };
+    });
+    const cashflows = years.map(y => y.netSavings);
+    return { years, cumulative: cashflows.reduce((a,b)=>a+b,0), npv: npv(cashflows, discountRate), cashflows };
+  }
+
+  function renderSupport(r) {
+    const rows = [
+      ['Yearly case volume', r.years.map(y => fmtNum(y.yearlyCases))],
+      ['Automated cases', r.years.map(y => fmtNum(y.automated))],
+      ['Human-handled cases', r.years.map(y => fmtNum(y.human))],
+      ['FTE — no automation', r.years.map(y => y.fteNoAuto)],
+      ['FTE — with automation', r.years.map(y => y.fteWithAuto)],
+      ['FTE savings', r.years.map(y => y.fteSavings)],
+      ['Salary savings', r.years.map(y => fmtFull(y.salarySavings))],
+      ['DevRev cost', r.years.map(y => '−' + fmtFull(y.devrevCost).replace('−',''))],
+    ];
+    document.getElementById('support-table').innerHTML = rows.map(row =>
+      `<tr><td>${row[0]}</td><td class="rv">${row[1][0]}</td><td class="rv">${row[1][1]}</td><td class="rv">${row[1][2]}</td></tr>`).join('');
+    document.getElementById('support-foot').innerHTML =
+      `<tr><td>Net savings</td>${r.years.map(y => `<td class="rv" style="color:var(--grn)">${fmtFull(y.netSavings)}</td>`).join('')}</tr>`;
+    document.getElementById('support-y1').textContent = fmt(r.years[0].netSavings);
+    document.getElementById('support-npv').textContent = fmt(r.npv);
+    document.getElementById('support-cumulative').textContent = fmtFull(r.cumulative);
+    document.getElementById('summary-support').textContent = fmt(r.years[0].netSavings);
+  }
+
+  function computeSearch() {
+    const n = getInput('sea','nWorkers'), hourly = getInput('sea','hourlyCost'),
+      wd = getInput('sea','workdays'), hrsSearch = getInput('sea','hoursSearch'),
+      searchGain = getInput('sea','searchGain')/100, dupHours = getInput('sea','dupHours'),
+      dupRed = getInput('sea','dupReduction')/100, decisions = getInput('sea','decisions'),
+      decVal = getInput('sea','decisionValue'), decGain = getInput('sea','decisionGain')/100;
+    const adoptions = [getInput('sea','adoptY1')/100, getInput('sea','adoptY2')/100, getInput('sea','adoptY3')/100];
+    const onetime = getInput('sea','onetime'), license = getInput('sea','license'), changeMgmt = getInput('sea','changeMgmt');
+
+    const productivity = n * hourly * hrsSearch * wd * searchGain;
+    const collaboration = n * hourly * dupHours * 12 * dupRed;
+    const decision = decisions * decVal * 12 * decGain;
+    const baseValue = productivity + collaboration + decision;
+
+    const years = adoptions.map((adoption, i) => {
+      const adjustedValue = baseValue * adoption;
+      const cost = license + changeMgmt + (i === 0 ? onetime : 0);
+      return { adoption, adjustedValue, cost, net: adjustedValue - cost };
+    });
+    const cashflows = years.map(y => y.net);
+    return { productivity, collaboration, decision, baseValue, years,
+             cumulative: cashflows.reduce((a,b)=>a+b,0), npv: npv(cashflows, discountRate), cashflows };
+  }
+
+  function renderSearch(r) {
+    document.getElementById('search-breakdown').innerHTML = `
+      <tr><td>Productivity gain</td><td class="rv">${fmtFull(r.productivity)}</td></tr>
+      <tr><td>Collaboration efficiency</td><td class="rv">${fmtFull(r.collaboration)}</td></tr>
+      <tr><td>Decision quality & speed</td><td class="rv">${fmtFull(r.decision)}</td></tr>
+      <tr style="border-top:1.5px solid var(--bhi) !important"><td style="color:var(--tx);font-weight:700">Base value (100% adoption)</td><td class="rv" style="color:var(--pur)">${fmtFull(r.baseValue)}</td></tr>
+    `;
+    document.getElementById('search-year-table').innerHTML = `
+      <tr><td>Adoption</td>${r.years.map(y => `<td class="rv">${(y.adoption*100).toFixed(0)}%</td>`).join('')}</tr>
+      <tr><td>Adjusted value</td>${r.years.map(y => `<td class="rv">${fmtFull(y.adjustedValue)}</td>`).join('')}</tr>
+      <tr><td>Total cost</td>${r.years.map(y => `<td class="rv">−${fmtFull(y.cost).replace('−','')}</td>`).join('')}</tr>
+    `;
+    document.getElementById('search-foot').innerHTML =
+      `<tr><td>Net value</td>${r.years.map(y => `<td class="rv">${fmtFull(y.net)}</td>`).join('')}</tr>`;
+    document.getElementById('search-y1').textContent = fmt(r.years[0].net);
+    document.getElementById('search-npv').textContent = fmt(r.npv);
+    document.getElementById('search-cumulative').textContent = fmtFull(r.cumulative);
+    document.getElementById('summary-search').textContent = fmt(r.years[0].net);
+  }
+
+  function computeNPS() {
+    const customers = getInput('nps','customers'), arpu = getInput('nps','arpu'),
+      churn = getInput('nps','churn')/100, curNps = getInput('nps','currentNps'),
+      tarNps = getInput('nps','targetNps'), refPer10 = getInput('nps','referralPer10')/100,
+      clvPer10 = getInput('nps','clvPer10')/100, retPer1 = getInput('nps','retentionPer1')/100;
+
+    const delta = tarNps - curNps;
+    const referralGrowth = (delta/10) * refPer10;
+    const clvUplift = 1 + (delta/10) * clvPer10;
+    const retentionImprovement = delta * retPer1;
+    const newChurn = Math.max(0, churn - retentionImprovement);
+    const customersRetained = customers * retentionImprovement;
+    const retentionRevenue = customersRetained * arpu;
+    const newReferralCustomers = customers * referralGrowth;
+    const referralRevenue = newReferralCustomers * arpu;
+    const annualIncremental = retentionRevenue + referralRevenue;
+    const cashflows = [annualIncremental, annualIncremental, annualIncremental];
+    return { delta, referralGrowth, clvUplift, retentionImprovement, newChurn,
+             customersRetained, retentionRevenue, newReferralCustomers, referralRevenue,
+             annualIncremental, npv: npv(cashflows, discountRate), cashflows };
+  }
+
+  function renderNPS(r) {
+    document.getElementById('nps-table').innerHTML = `
+      <tr><td>NPS delta (target − current)</td><td class="rv">+${r.delta}</td></tr>
+      <tr><td>Retention improvement</td><td class="rv">${fmtPct(r.retentionImprovement, 2)}</td></tr>
+      <tr><td>New churn rate</td><td class="rv">${fmtPct(r.newChurn, 2)}</td></tr>
+      <tr><td>Referral growth</td><td class="rv">${fmtPct(r.referralGrowth, 2)}</td></tr>
+      <tr><td>CLV uplift factor</td><td class="rv">${r.clvUplift.toFixed(3)}×</td></tr>
+      <tr><td>Customers retained / year</td><td class="rv">${fmtNum(r.customersRetained)}</td></tr>
+      <tr><td>Revenue from retention</td><td class="rv">${fmtFull(r.retentionRevenue)}</td></tr>
+      <tr><td>New customers from referrals</td><td class="rv">${fmtNum(r.newReferralCustomers)}</td></tr>
+      <tr><td>Revenue from referrals</td><td class="rv">${fmtFull(r.referralRevenue)}</td></tr>
+    `;
+    document.getElementById('nps-foot').innerHTML =
+      `<tr><td>Annual incremental revenue</td><td class="rv" style="color:var(--org)">${fmtFull(r.annualIncremental)}</td></tr>`;
+    document.getElementById('nps-annual').textContent = fmt(r.annualIncremental);
+    document.getElementById('nps-npv').textContent = fmt(r.npv);
+    document.getElementById('nps-npv-callout').textContent = fmtFull(r.npv);
+    document.getElementById('summary-nps').textContent = fmt(r.annualIncremental);
+  }
+
+  function computeAI() {
+    const cp = getInput('ai','copilotPrice') * getInput('ai','copilotQty') * 12;
+    const af = getInput('ai','agentforcePrice') * getInput('ai','agentforceQty') * 12;
+    const zd = getInput('ai','zendeskPrice') * getInput('ai','zendeskQty') * 12;
+    const hs = getInput('ai','hubspotPrice') * getInput('ai','hubspotQty') * 12;
+    const fd = getInput('ai','freddyPrice') * getInput('ai','freddyQty') * 12;
+    const integ = getInput('ai','integrationCost');
+    const dr = getInput('ai','devrevPrice') * getInput('ai','devrevQty') * 12;
+    const scenarioA = cp + af + zd + hs + fd + integ;
+    const scenarioB = dr;
+    const annualSavings = scenarioA - scenarioB;
+    const cashflows = [annualSavings, annualSavings, annualSavings];
+    return { copilotCost:cp, agentforceCost:af, zendeskCost:zd, hubspotCost:hs, freddyCost:fd, integ,
+             scenarioA, devrevCost:dr, scenarioB, annualSavings,
+             npv: npv(cashflows, discountRate), cashflows };
+  }
+
+  function renderAI(r) {
+    document.querySelector('[data-ai-out="copilotCost"]').textContent = fmtFull(r.copilotCost);
+    document.querySelector('[data-ai-out="agentforceCost"]').textContent = fmtFull(r.agentforceCost);
+    document.querySelector('[data-ai-out="zendeskCost"]').textContent = fmtFull(r.zendeskCost);
+    document.querySelector('[data-ai-out="hubspotCost"]').textContent = fmtFull(r.hubspotCost);
+    document.querySelector('[data-ai-out="freddyCost"]').textContent = fmtFull(r.freddyCost);
+    document.querySelector('[data-ai-out="integrationDisplay"]').textContent = fmtFull(r.integ);
+    document.querySelector('[data-ai-out="devrevCost"]').textContent = fmtFull(r.devrevCost);
+
+    document.getElementById('ai-table').innerHTML = `
+      <tr><td style="color:var(--org);font-weight:700">Scenario A — Fragmented stack</td><td class="rv" style="color:var(--org)">${fmtFull(r.scenarioA)}</td></tr>
+      <tr><td style="padding-left:18px">Microsoft 365 Copilot</td><td class="rv">${fmtFull(r.copilotCost)}</td></tr>
+      <tr><td style="padding-left:18px">Salesforce Agentforce</td><td class="rv">${fmtFull(r.agentforceCost)}</td></tr>
+      <tr><td style="padding-left:18px">Zendesk AI Agents</td><td class="rv">${fmtFull(r.zendeskCost)}</td></tr>
+      <tr><td style="padding-left:18px">HubSpot Breeze AI</td><td class="rv">${fmtFull(r.hubspotCost)}</td></tr>
+      <tr><td style="padding-left:18px">Freshworks Freddy AI</td><td class="rv">${fmtFull(r.freddyCost)}</td></tr>
+      <tr><td style="padding-left:18px">Integration & glue</td><td class="rv">${fmtFull(r.integ)}</td></tr>
+      <tr><td style="color:var(--blu);font-weight:700">Scenario B — DevRev centralized</td><td class="rv" style="color:var(--blu)">${fmtFull(r.scenarioB)}</td></tr>
+    `;
+    document.getElementById('ai-foot').innerHTML =
+      `<tr><td>Annual cost avoidance (A − B)</td><td class="rv" style="color:var(--blu)">${fmtFull(r.annualSavings)}</td></tr>`;
+    document.getElementById('ai-annual').textContent = fmt(r.annualSavings);
+    document.getElementById('ai-npv').textContent = fmt(r.npv);
+    document.getElementById('ai-annual-callout').textContent = fmtFull(r.annualSavings);
+    document.getElementById('summary-ai').textContent = fmt(r.annualSavings);
+  }
+
+  function renderTotals(s, e, n, a) {
+    const annualY1 =
+      (enabled.support ? s.years[0].netSavings : 0) +
+      (enabled.search  ? e.years[0].net        : 0) +
+      (enabled.nps     ? n.annualIncremental   : 0) +
+      (enabled.ai      ? a.annualSavings       : 0);
+    const totalCF = [0,1,2].map(i =>
+      (enabled.support ? s.cashflows[i] : 0) +
+      (enabled.search  ? e.cashflows[i] : 0) +
+      (enabled.nps     ? n.cashflows[i] : 0) +
+      (enabled.ai      ? a.cashflows[i] : 0)
+    );
+    document.getElementById('total-annual').textContent = fmt(annualY1);
+    document.getElementById('total-npv').textContent = fmt(npv(totalCF, discountRate));
+    const count = Object.values(enabled).filter(Boolean).length;
+    document.getElementById('selected-count').textContent = count;
+  }
+
+  function recompute() {
+    const s = computeSupport(), e = computeSearch(), n = computeNPS(), a = computeAI();
+    renderSupport(s); renderSearch(e); renderNPS(n); renderAI(a); renderTotals(s, e, n, a);
+  }
+
+  document.addEventListener('input', (ev) => {
+    const t = ev.target;
+    if (t.id === 'company-name') return;
+    if (t.id === 'discount-rate') {
+      discountRate = (parseFloat(t.value) || 0) / 100;
+      document.getElementById('summary-discount').textContent = t.value;
+    }
+    recompute();
+  });
+  document.getElementById('currency-select').addEventListener('change', (ev) => {
+    currency = ev.target.value;
+    recompute();
+  });
+
+  document.querySelectorAll('.gc[data-module]').forEach(el => {
+    el.addEventListener('click', () => {
+      const m = el.dataset.module;
+      enabled[m] = !enabled[m];
+      applyToggles();
+      recompute();
+    });
+  });
+
+  function showToast(msg) {
+    const el = document.getElementById('export-toast');
+    el.textContent = msg;
+    el.style.opacity = '1';
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => { el.style.opacity = '0'; }, 2500);
+  }
+
+  document.getElementById('btn-print').addEventListener('click', () => {
+    const company = document.getElementById('company-name').value.trim() || '—';
+    const date = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('print-company').textContent = company;
+    document.getElementById('print-date').textContent = date;
+    window.print();
+    showToast('✓ PDF downloaded');
+  });
+
+  // ── Excel export (pure JS XLSX via SheetJS-style XML spreadsheet) ──
+  function exportXLSX() {
+    const company = document.getElementById('company-name').value.trim() || 'Company';
+    const date = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    const s = computeSupport(), e = computeSearch(), n = computeNPS(), a = computeAI();
+    const cur = currency;
+    const rawNum = (v) => Math.round(v);
+
+    const sheets = [];
+
+    // Summary sheet
+    const summaryRows = [
+      ['DevRev Benefits Calculator — Summary (provided by RevEdge)'],
+      ['Prepared for', company],
+      ['Date', date],
+      ['Currency', cur],
+      ['Discount rate', (discountRate * 100).toFixed(1) + '%'],
+      [],
+      ['Benefit category', 'Enabled', 'Year 1 value (' + cur + ')', '3-year NPV (' + cur + ')'],
+      ['Support — Case automation', enabled.support ? 'Yes' : 'No', rawNum(s.years[0].netSavings), rawNum(s.npv)],
+      ['Enterprise search', enabled.search ? 'Yes' : 'No', rawNum(e.years[0].net), rawNum(e.npv)],
+      ['Customer satisfaction (NPS)', enabled.nps ? 'Yes' : 'No', rawNum(n.annualIncremental), rawNum(n.npv)],
+      ['AI centralization', enabled.ai ? 'Yes' : 'No', rawNum(a.annualSavings), rawNum(a.npv)],
+      [],
+      ['Total (selected only)', '',
+        (enabled.support ? s.years[0].netSavings : 0) + (enabled.search ? e.years[0].net : 0) + (enabled.nps ? n.annualIncremental : 0) + (enabled.ai ? a.annualSavings : 0),
+        rawNum(npv([0,1,2].map(i => (enabled.support ? s.cashflows[i] : 0) + (enabled.search ? e.cashflows[i] : 0) + (enabled.nps ? n.cashflows[i] : 0) + (enabled.ai ? a.cashflows[i] : 0)), discountRate))
+      ],
+    ];
+    sheets.push({ name: 'Summary', rows: summaryRows });
+
+    // Support sheet
+    sheets.push({ name: 'Support', rows: [
+      ['Support — Case Automation FTE Savings'],
+      [],
+      ['Inputs'],
+      ['Monthly case volume', getInput('sup','currentMonthlyCases')],
+      ['Annual growth rate', getInput('sup','annualGrowthRate') + '%'],
+      ['Cost per support FTE', rawNum(getInput('sup','costPerFTE'))],
+      ['Cases per FTE per year', getInput('sup','casesPerFTE')],
+      ['Automation % Y1', getInput('sup','autoY1') + '%'],
+      ['Automation % Y2', getInput('sup','autoY2') + '%'],
+      ['Automation % Y3', getInput('sup','autoY3') + '%'],
+      ['Setup cost (Y1)', rawNum(getInput('sup','setupCost'))],
+      ['Annual DevRev cost', rawNum(getInput('sup','annualCost'))],
+      [],
+      ['Metric', 'Year 1', 'Year 2', 'Year 3'],
+      ['Yearly case volume', rawNum(s.years[0].yearlyCases), rawNum(s.years[1].yearlyCases), rawNum(s.years[2].yearlyCases)],
+      ['Automated cases', rawNum(s.years[0].automated), rawNum(s.years[1].automated), rawNum(s.years[2].automated)],
+      ['Human-handled cases', rawNum(s.years[0].human), rawNum(s.years[1].human), rawNum(s.years[2].human)],
+      ['FTE — no automation', s.years[0].fteNoAuto, s.years[1].fteNoAuto, s.years[2].fteNoAuto],
+      ['FTE — with automation', s.years[0].fteWithAuto, s.years[1].fteWithAuto, s.years[2].fteWithAuto],
+      ['FTE savings', s.years[0].fteSavings, s.years[1].fteSavings, s.years[2].fteSavings],
+      ['Salary savings', rawNum(s.years[0].salarySavings), rawNum(s.years[1].salarySavings), rawNum(s.years[2].salarySavings)],
+      ['DevRev cost', rawNum(s.years[0].devrevCost), rawNum(s.years[1].devrevCost), rawNum(s.years[2].devrevCost)],
+      ['Net savings', rawNum(s.years[0].netSavings), rawNum(s.years[1].netSavings), rawNum(s.years[2].netSavings)],
+      [],
+      ['Cumulative 3-year net savings', rawNum(s.cumulative)],
+      ['3-year NPV', rawNum(s.npv)],
+    ]});
+
+    // Search sheet
+    sheets.push({ name: 'Enterprise Search', rows: [
+      ['Enterprise Search — Productivity, Collaboration & Decision Quality'],
+      [],
+      ['Inputs'],
+      ['Knowledge workers', getInput('sea','nWorkers')],
+      ['Hourly cost', getInput('sea','hourlyCost')],
+      ['Workdays / year', getInput('sea','workdays')],
+      ['Hours / day searching', getInput('sea','hoursSearch')],
+      ['% time saved', getInput('sea','searchGain') + '%'],
+      ['Dup. hours / month / worker', getInput('sea','dupHours')],
+      ['% dup reduction', getInput('sea','dupReduction') + '%'],
+      ['Decisions / month', getInput('sea','decisions')],
+      ['Value per decision', getInput('sea','decisionValue')],
+      ['% decision improvement', getInput('sea','decisionGain') + '%'],
+      ['Adoption Y1 / Y2 / Y3', getInput('sea','adoptY1') + '% / ' + getInput('sea','adoptY2') + '% / ' + getInput('sea','adoptY3') + '%'],
+      ['Implementation cost (Y1)', rawNum(getInput('sea','onetime'))],
+      ['Annual license', rawNum(getInput('sea','license'))],
+      ['Change mgmt / year', rawNum(getInput('sea','changeMgmt'))],
+      [],
+      ['Base value components', 'Annual (' + cur + ')'],
+      ['Productivity gain', rawNum(e.productivity)],
+      ['Collaboration efficiency', rawNum(e.collaboration)],
+      ['Decision quality & speed', rawNum(e.decision)],
+      ['Base value (100% adoption)', rawNum(e.baseValue)],
+      [],
+      ['Adoption-adjusted', 'Year 1', 'Year 2', 'Year 3'],
+      ['Adoption', (e.years[0].adoption*100).toFixed(0) + '%', (e.years[1].adoption*100).toFixed(0) + '%', (e.years[2].adoption*100).toFixed(0) + '%'],
+      ['Adjusted value', rawNum(e.years[0].adjustedValue), rawNum(e.years[1].adjustedValue), rawNum(e.years[2].adjustedValue)],
+      ['Total cost', rawNum(e.years[0].cost), rawNum(e.years[1].cost), rawNum(e.years[2].cost)],
+      ['Net value', rawNum(e.years[0].net), rawNum(e.years[1].net), rawNum(e.years[2].net)],
+      [],
+      ['Cumulative 3-year net value', rawNum(e.cumulative)],
+      ['3-year NPV', rawNum(e.npv)],
+    ]});
+
+    // NPS sheet
+    sheets.push({ name: 'Customer Satisfaction', rows: [
+      ['Customer Satisfaction — NPS-driven Retention & Referral Revenue'],
+      [],
+      ['Inputs'],
+      ['Current customers', getInput('nps','customers')],
+      ['ARPU (annual)', getInput('nps','arpu')],
+      ['Current churn rate', getInput('nps','churn') + '%'],
+      ['Current NPS', getInput('nps','currentNps')],
+      ['Target NPS', getInput('nps','targetNps')],
+      ['Referral per +10 NPS', getInput('nps','referralPer10') + '%'],
+      ['CLV uplift per +10 NPS', getInput('nps','clvPer10') + '%'],
+      ['Retention per +1 NPS (p.p.)', getInput('nps','retentionPer1')],
+      [],
+      ['Metric', 'Value'],
+      ['NPS delta', '+' + n.delta],
+      ['Retention improvement', (n.retentionImprovement * 100).toFixed(2) + '%'],
+      ['New churn rate', (n.newChurn * 100).toFixed(2) + '%'],
+      ['Referral growth', (n.referralGrowth * 100).toFixed(2) + '%'],
+      ['CLV uplift factor', n.clvUplift.toFixed(3) + '×'],
+      ['Customers retained / year', rawNum(n.customersRetained)],
+      ['Revenue from retention', rawNum(n.retentionRevenue)],
+      ['New customers from referrals', rawNum(n.newReferralCustomers)],
+      ['Revenue from referrals', rawNum(n.referralRevenue)],
+      ['Annual incremental revenue', rawNum(n.annualIncremental)],
+      [],
+      ['3-year NPV', rawNum(n.npv)],
+    ]});
+
+    // AI sheet
+    sheets.push({ name: 'AI Centralization', rows: [
+      ['AI Centralization — Consolidation Savings'],
+      [],
+      ['Scenario A — Fragmented AI stack', 'Annual cost (' + cur + ')'],
+      ['Microsoft 365 Copilot', rawNum(a.copilotCost)],
+      ['Salesforce Agentforce', rawNum(a.agentforceCost)],
+      ['Zendesk AI Agents', rawNum(a.zendeskCost)],
+      ['HubSpot Breeze AI', rawNum(a.hubspotCost)],
+      ['Freshworks Freddy AI', rawNum(a.freddyCost)],
+      ['Integration & glue', rawNum(a.integ)],
+      ['Total Scenario A', rawNum(a.scenarioA)],
+      [],
+      ['Scenario B — DevRev centralized', 'Annual cost (' + cur + ')'],
+      ['DevRev AI platform', rawNum(a.devrevCost)],
+      [],
+      ['Annual cost avoidance (A − B)', rawNum(a.annualSavings)],
+      ['3-year NPV', rawNum(a.npv)],
+    ]});
+
+    // Build XML Spreadsheet 2003
+    const esc = (v) => String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<?mso-application progid="Excel.Sheet"?>\n';
+    xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
+    xml += '<Styles><Style ss:ID="hdr"><Font ss:Bold="1" ss:Size="11"/></Style>';
+    xml += '<Style ss:ID="title"><Font ss:Bold="1" ss:Size="14"/></Style>';
+    xml += '<Style ss:ID="num"><NumberFormat ss:Format="#,##0"/></Style></Styles>\n';
+    for (const sheet of sheets) {
+      xml += `<Worksheet ss:Name="${esc(sheet.name)}"><Table>\n`;
+      for (let ri = 0; ri < sheet.rows.length; ri++) {
+        const row = sheet.rows[ri];
+        if (!row || row.length === 0) { xml += '<Row></Row>\n'; continue; }
+        xml += '<Row>';
+        const isTitle = ri === 0;
+        const isHeader = row.length >= 3 && typeof row[1] === 'string' && (row[1].startsWith('Year') || row[1] === 'Value' || row[1].startsWith('Annual') || row[1] === 'Enabled');
+        for (const cell of row) {
+          const style = isTitle ? ' ss:StyleID="title"' : (isHeader ? ' ss:StyleID="hdr"' : '');
+          if (typeof cell === 'number') {
+            xml += `<Cell${style || ' ss:StyleID="num"'}><Data ss:Type="Number">${cell}</Data></Cell>`;
+          } else {
+            xml += `<Cell${style}><Data ss:Type="String">${esc(cell)}</Data></Cell>`;
+          }
+        }
+        xml += '</Row>\n';
+      }
+      xml += '</Table></Worksheet>\n';
+    }
+    xml += '</Workbook>';
+
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `DevRev_Benefits_${company.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast('✓ Excel downloaded');
+  }
+
+  // ── Markdown export (copy to clipboard) ──
+  function exportMarkdown() {
+    const company = document.getElementById('company-name').value.trim() || 'Company';
+    const date = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    const s = computeSupport(), e = computeSearch(), n = computeNPS(), a = computeAI();
+    const cur = currency;
+    const f = (v) => { const abs = Math.abs(Math.round(v)); const s = abs.toLocaleString('en-US'); return v < 0 ? '−' + cur + s : cur + s; };
+    const pct = (v, d) => (v * 100).toFixed(d !== undefined ? d : 1) + '%';
+
+    const totalY1 = (enabled.support ? s.years[0].netSavings : 0) + (enabled.search ? e.years[0].net : 0) + (enabled.nps ? n.annualIncremental : 0) + (enabled.ai ? a.annualSavings : 0);
+    const totalCF = [0,1,2].map(i => (enabled.support ? s.cashflows[i] : 0) + (enabled.search ? e.cashflows[i] : 0) + (enabled.nps ? n.cashflows[i] : 0) + (enabled.ai ? a.cashflows[i] : 0));
+    const totalNPV = npv(totalCF, discountRate);
+
+    let md = '';
+    md += `# DevRev Computer — Benefits Analysis\n\n`;
+    md += `**Prepared for:** ${company}  \n`;
+    md += `**Date:** ${date}  \n`;
+    md += `**Currency:** ${cur}  \n`;
+    md += `**NPV discount rate:** ${(discountRate * 100).toFixed(1)}%  \n\n`;
+    md += `> This analysis was produced using the RevEdge Benefits Calculator, provided by RevEdge (revedge.eu), official DevRev GTM Partner in EMEA. All estimates are illustrative and intended for directional planning only.\n\n`;
+    md += `---\n\n`;
+
+    // Executive summary
+    md += `## Executive Summary\n\n`;
+    md += `This document quantifies the projected financial benefits of implementing DevRev Computer for ${company}. The analysis covers four value drivers: support case automation, enterprise search productivity, customer satisfaction improvements, and AI tool consolidation.\n\n`;
+    md += `| Benefit Category | Year 1 Value | 3-Year NPV | Included |\n`;
+    md += `|:---|---:|---:|:---:|\n`;
+    md += `| Support — Case automation | ${f(s.years[0].netSavings)} | ${f(s.npv)} | ${enabled.support ? '✓' : '—'} |\n`;
+    md += `| Enterprise search | ${f(e.years[0].net)} | ${f(e.npv)} | ${enabled.search ? '✓' : '—'} |\n`;
+    md += `| Customer satisfaction (NPS) | ${f(n.annualIncremental)} | ${f(n.npv)} | ${enabled.nps ? '✓' : '—'} |\n`;
+    md += `| AI centralization | ${f(a.annualSavings)} | ${f(a.npv)} | ${enabled.ai ? '✓' : '—'} |\n`;
+    md += `| **Total (selected)** | **${f(totalY1)}** | **${f(totalNPV)}** | |\n\n`;
+    md += `Over a three-year horizon, the projected net present value of DevRev adoption for ${company} is **${f(totalNPV)}**, with a first-year benefit of **${f(totalY1)}**.\n\n`;
+    md += `---\n\n`;
+
+    // Module 1: Support
+    md += `## 1. Support — Case Automation & FTE Savings\n\n`;
+    md += `### Rationale\n\n`;
+    md += `As ${company}'s customer base grows, support case volumes increase proportionally. Without automation, this requires a linear increase in support headcount, driving up operating costs. DevRev's AI-powered case automation deflects a growing percentage of incoming cases, allowing the support organization to handle rising volumes without proportionally increasing staff. The net benefit is the salary cost of FTEs that would otherwise need to be hired, minus the cost of the DevRev platform.\n\n`;
+    md += `### Assumptions\n\n`;
+    md += `- Current monthly case volume: **${fmtNum(getInput('sup','currentMonthlyCases'))}** cases\n`;
+    md += `- Annual case growth rate: **${getInput('sup','annualGrowthRate')}%**\n`;
+    md += `- Fully loaded cost per support FTE: **${f(getInput('sup','costPerFTE'))}** per year\n`;
+    md += `- Cases handled per FTE per year: **${fmtNum(getInput('sup','casesPerFTE'))}**\n`;
+    md += `- Automation rates: **${getInput('sup','autoY1')}%** (Y1), **${getInput('sup','autoY2')}%** (Y2), **${getInput('sup','autoY3')}%** (Y3)\n`;
+    md += `- DevRev setup cost: **${f(getInput('sup','setupCost'))}** (Year 1 only)\n`;
+    md += `- DevRev annual platform cost: **${f(getInput('sup','annualCost'))}**\n\n`;
+    md += `### Projected Impact\n\n`;
+    md += `| Metric | Year 1 | Year 2 | Year 3 |\n`;
+    md += `|:---|---:|---:|---:|\n`;
+    md += `| Yearly case volume | ${fmtNum(s.years[0].yearlyCases)} | ${fmtNum(s.years[1].yearlyCases)} | ${fmtNum(s.years[2].yearlyCases)} |\n`;
+    md += `| Automated cases | ${fmtNum(s.years[0].automated)} | ${fmtNum(s.years[1].automated)} | ${fmtNum(s.years[2].automated)} |\n`;
+    md += `| Human-handled cases | ${fmtNum(s.years[0].human)} | ${fmtNum(s.years[1].human)} | ${fmtNum(s.years[2].human)} |\n`;
+    md += `| FTE required (no automation) | ${s.years[0].fteNoAuto} | ${s.years[1].fteNoAuto} | ${s.years[2].fteNoAuto} |\n`;
+    md += `| FTE required (with automation) | ${s.years[0].fteWithAuto} | ${s.years[1].fteWithAuto} | ${s.years[2].fteWithAuto} |\n`;
+    md += `| FTE savings | ${s.years[0].fteSavings} | ${s.years[1].fteSavings} | ${s.years[2].fteSavings} |\n`;
+    md += `| Salary savings | ${f(s.years[0].salarySavings)} | ${f(s.years[1].salarySavings)} | ${f(s.years[2].salarySavings)} |\n`;
+    md += `| DevRev cost | ${f(s.years[0].devrevCost)} | ${f(s.years[1].devrevCost)} | ${f(s.years[2].devrevCost)} |\n`;
+    md += `| **Net savings** | **${f(s.years[0].netSavings)}** | **${f(s.years[1].netSavings)}** | **${f(s.years[2].netSavings)}** |\n\n`;
+    md += `**Cumulative 3-year net savings:** ${f(s.cumulative)}  \n`;
+    md += `**3-year NPV:** ${f(s.npv)}\n\n`;
+    md += `### How the Calculation Works\n\n`;
+    md += `For each year, the total case volume is projected by applying the annual growth rate to the base volume. The automation percentage determines how many cases are handled without human intervention. The FTE requirement is calculated by dividing the remaining human-handled cases by the per-FTE throughput. The difference in FTE between the "no automation" and "with automation" scenarios, multiplied by the fully loaded salary cost, yields the gross salary savings. Subtracting the DevRev platform cost (including one-time setup in Year 1) gives the net savings.\n\n`;
+    md += `---\n\n`;
+
+    // Module 2: Search
+    md += `## 2. Enterprise Search — Productivity, Collaboration & Decision Quality\n\n`;
+    md += `### Rationale\n\n`;
+    md += `Knowledge workers spend a significant portion of their day searching for information across disparate systems, duplicating work that colleagues have already completed, and making decisions with incomplete data. DevRev's unified enterprise search consolidates information retrieval, reducing time wasted searching, eliminating duplicate effort, and improving the quality and speed of business decisions. The value is realized across three components: direct time savings, reduced duplication, and better decision outcomes.\n\n`;
+    md += `### Assumptions\n\n`;
+    md += `- Knowledge workers: **${fmtNum(getInput('sea','nWorkers'))}**\n`;
+    md += `- Hourly cost per worker: **${f(getInput('sea','hourlyCost'))}**\n`;
+    md += `- Working days per year: **${getInput('sea','workdays')}**\n`;
+    md += `- Hours per day spent searching: **${getInput('sea','hoursSearch')}**\n`;
+    md += `- Time saved through better search: **${getInput('sea','searchGain')}%**\n`;
+    md += `- Duplicate work hours per worker per month: **${getInput('sea','dupHours')}**\n`;
+    md += `- Duplication reduction: **${getInput('sea','dupReduction')}%**\n`;
+    md += `- Business decisions per month: **${fmtNum(getInput('sea','decisions'))}**\n`;
+    md += `- Average value per decision: **${f(getInput('sea','decisionValue'))}**\n`;
+    md += `- Decision quality improvement: **${getInput('sea','decisionGain')}%**\n`;
+    md += `- Adoption rates: **${getInput('sea','adoptY1')}%** (Y1), **${getInput('sea','adoptY2')}%** (Y2), **${getInput('sea','adoptY3')}%** (Y3)\n`;
+    md += `- Implementation cost: **${f(getInput('sea','onetime'))}** (Year 1 only)\n`;
+    md += `- Annual license: **${f(getInput('sea','license'))}**\n`;
+    md += `- Change management: **${f(getInput('sea','changeMgmt'))}** per year\n\n`;
+    md += `### Base Value Components\n\n`;
+    md += `| Component | Annual Value |\n`;
+    md += `|:---|---:|\n`;
+    md += `| Productivity gain (time saved searching) | ${f(e.productivity)} |\n`;
+    md += `| Collaboration efficiency (reduced duplication) | ${f(e.collaboration)} |\n`;
+    md += `| Decision quality & speed | ${f(e.decision)} |\n`;
+    md += `| **Base value at 100% adoption** | **${f(e.baseValue)}** |\n\n`;
+    md += `### Adoption-Adjusted Projection\n\n`;
+    md += `| Metric | Year 1 | Year 2 | Year 3 |\n`;
+    md += `|:---|---:|---:|---:|\n`;
+    md += `| Adoption | ${pct(e.years[0].adoption,0)} | ${pct(e.years[1].adoption,0)} | ${pct(e.years[2].adoption,0)} |\n`;
+    md += `| Adjusted value | ${f(e.years[0].adjustedValue)} | ${f(e.years[1].adjustedValue)} | ${f(e.years[2].adjustedValue)} |\n`;
+    md += `| Total cost | ${f(e.years[0].cost)} | ${f(e.years[1].cost)} | ${f(e.years[2].cost)} |\n`;
+    md += `| **Net value** | **${f(e.years[0].net)}** | **${f(e.years[1].net)}** | **${f(e.years[2].net)}** |\n\n`;
+    md += `**Cumulative 3-year net value:** ${f(e.cumulative)}  \n`;
+    md += `**3-year NPV:** ${f(e.npv)}\n\n`;
+    md += `### How the Calculation Works\n\n`;
+    md += `The base value sums three independent benefit streams: (1) time savings from faster information retrieval, calculated as workers × hourly cost × daily search hours × working days × percentage improvement; (2) reduced duplication, calculated as workers × hourly cost × monthly duplicate hours × 12 months × reduction percentage; and (3) decision quality improvements, calculated as monthly decisions × value per decision × 12 months × improvement percentage. The base value is then scaled by the expected adoption rate for each year, and the annual platform and change management costs are subtracted.\n\n`;
+    md += `---\n\n`;
+
+    // Module 3: NPS
+    md += `## 3. Customer Satisfaction — NPS-Driven Retention & Referral Revenue\n\n`;
+    md += `### Rationale\n\n`;
+    md += `Improving customer experience through faster, more effective support and better self-service has a measurable impact on Net Promoter Score (NPS). Higher NPS correlates with improved customer retention (lower churn) and increased referral-driven new customer acquisition. Even modest NPS improvements translate to meaningful revenue gains when applied across a large customer base, as each retained customer continues to generate recurring revenue and each referral represents new revenue acquired at near-zero marketing cost.\n\n`;
+    md += `### Assumptions\n\n`;
+    md += `- Current customer base: **${fmtNum(getInput('nps','customers'))}**\n`;
+    md += `- Average revenue per user (ARPU): **${f(getInput('nps','arpu'))}** per year\n`;
+    md += `- Current annual churn rate: **${getInput('nps','churn')}%**\n`;
+    md += `- Current NPS: **${getInput('nps','currentNps')}**\n`;
+    md += `- Target NPS: **${getInput('nps','targetNps')}**\n`;
+    md += `- Referral uplift per +10 NPS points: **${getInput('nps','referralPer10')}%** of customer base\n`;
+    md += `- CLV uplift per +10 NPS points: **${getInput('nps','clvPer10')}%**\n`;
+    md += `- Retention improvement per +1 NPS point: **${getInput('nps','retentionPer1')} percentage points**\n\n`;
+    md += `### Projected Impact\n\n`;
+    md += `| Metric | Value |\n`;
+    md += `|:---|---:|\n`;
+    md += `| NPS delta (target − current) | +${n.delta} |\n`;
+    md += `| Retention improvement | ${pct(n.retentionImprovement, 2)} |\n`;
+    md += `| New churn rate | ${pct(n.newChurn, 2)} |\n`;
+    md += `| Referral growth | ${pct(n.referralGrowth, 2)} |\n`;
+    md += `| CLV uplift factor | ${n.clvUplift.toFixed(3)}× |\n`;
+    md += `| Customers retained per year | ${fmtNum(n.customersRetained)} |\n`;
+    md += `| Revenue from retention | ${f(n.retentionRevenue)} |\n`;
+    md += `| New customers from referrals | ${fmtNum(n.newReferralCustomers)} |\n`;
+    md += `| Revenue from referrals | ${f(n.referralRevenue)} |\n`;
+    md += `| **Annual incremental revenue** | **${f(n.annualIncremental)}** |\n\n`;
+    md += `**3-year NPV of incremental revenue:** ${f(n.npv)}\n\n`;
+    md += `### How the Calculation Works\n\n`;
+    md += `The NPS delta drives three effects: (1) retention improvement, where each NPS point reduces churn by a fixed number of percentage points, translating to additional retained customers × ARPU; (2) referral growth, where higher NPS drives word-of-mouth acquisition proportional to the existing customer base; and (3) CLV uplift, reflecting that more satisfied customers tend to expand their usage over time. The annual incremental revenue from retention and referrals is treated as a recurring cash flow and discounted over the three-year horizon.\n\n`;
+    md += `---\n\n`;
+
+    // Module 4: AI
+    md += `## 4. AI Centralization — Consolidation Savings\n\n`;
+    md += `### Rationale\n\n`;
+    md += `Many organizations have accumulated a patchwork of AI-powered tools across departments — copilots for productivity, AI agents for customer service, intelligent assistants for sales and marketing. Each tool carries its own per-user licensing cost, and the integration overhead of maintaining data flows between them adds further expense. DevRev's unified AI platform replaces this fragmented stack with a single subscription, eliminating redundant licensing and integration costs while providing a consistent AI experience across all functions.\n\n`;
+    md += `### Scenario A — Fragmented AI Stack (Current State)\n\n`;
+    md += `| Tool | Annual Cost |\n`;
+    md += `|:---|---:|\n`;
+    md += `| Microsoft 365 Copilot | ${f(a.copilotCost)} |\n`;
+    md += `| Salesforce Agentforce | ${f(a.agentforceCost)} |\n`;
+    md += `| Zendesk AI Agents | ${f(a.zendeskCost)} |\n`;
+    md += `| HubSpot Breeze AI | ${f(a.hubspotCost)} |\n`;
+    md += `| Freshworks Freddy AI | ${f(a.freddyCost)} |\n`;
+    md += `| Integration & glue | ${f(a.integ)} |\n`;
+    md += `| **Total Scenario A** | **${f(a.scenarioA)}** |\n\n`;
+    md += `### Scenario B — DevRev Centralized\n\n`;
+    md += `| Tool | Annual Cost |\n`;
+    md += `|:---|---:|\n`;
+    md += `| DevRev AI platform | ${f(a.devrevCost)} |\n\n`;
+    md += `### Cost Avoidance\n\n`;
+    md += `| | Amount |\n`;
+    md += `|:---|---:|\n`;
+    md += `| Annual cost avoidance (A − B) | **${f(a.annualSavings)}** |\n`;
+    md += `| 3-year NPV | **${f(a.npv)}** |\n\n`;
+    md += `### How the Calculation Works\n\n`;
+    md += `The annual cost of the fragmented stack (Scenario A) is the sum of all individual tool costs — each computed as price × quantity × 12 months — plus a flat integration overhead. The DevRev centralized cost (Scenario B) is a single per-user monthly fee × number of users × 12 months. The cost avoidance is simply the difference between the two scenarios, treated as a recurring annual saving and discounted over three years for the NPV.\n\n`;
+    md += `---\n\n`;
+
+    // Methodology
+    md += `## Methodology Notes\n\n`;
+    md += `- **NPV calculation:** All future cash flows are discounted at ${pct(discountRate,1)} per year. Year 1 is discounted by (1+r), Year 2 by (1+r)², Year 3 by (1+r)³.\n`;
+    md += `- **Conservative approach:** Automation rates and adoption percentages are phased over three years to reflect realistic rollout timelines.\n`;
+    md += `- **Customizable inputs:** All assumptions used in this analysis are adjustable. The figures above reflect the specific parameters chosen for ${company}.\n`;
+    md += `- This analysis was produced using the RevEdge Benefits Calculator, provided by RevEdge (revedge.eu), official DevRev GTM Partner in EMEA.\n`;
+
+    navigator.clipboard.writeText(md).then(() => {
+      showToast('✓ Markdown copied to clipboard');
+    }).catch(() => {
+      showToast('⚠ Copy failed — try again');
+    });
+  }
+
+  document.getElementById('btn-xlsx').addEventListener('click', exportXLSX);
+  document.getElementById('btn-md').addEventListener('click', exportMarkdown);
+
+  // ── Guided Wizard ──
+  const wzSteps = [
+    {
+      title: 'Welcome',
+      desc: 'This wizard will guide you through the DevRev Benefits Calculator step by step. We\'ll collect your company details, choose which benefit areas to analyze, and fill in the assumptions for each.',
+      target: '.hero',
+    },
+    {
+      title: 'Company & Settings',
+      desc: 'Enter your company name, select your preferred currency, and set the NPV discount rate. These settings apply to all calculations.',
+      target: '.controls',
+    },
+    {
+      title: 'Select Benefit Categories',
+      desc: 'Choose which benefit areas to include in your analysis. Click a card to toggle it on or off. Disabled categories won\'t appear in the totals or exports.',
+      target: '.gg',
+    },
+    {
+      title: 'Support — Case Automation',
+      desc: 'Model the FTE savings from automating support cases with DevRev. Enter your current case volume, growth rate, staffing costs, and the expected automation percentages over three years.',
+      target: '#mod-support',
+      module: 'support',
+    },
+    {
+      title: 'Enterprise Search',
+      desc: 'Quantify the productivity, collaboration, and decision-quality gains from unified enterprise search. Enter your workforce details, current search habits, and expected adoption rates.',
+      target: '#mod-search',
+      module: 'search',
+    },
+    {
+      title: 'Customer Satisfaction',
+      desc: 'Estimate the revenue impact of NPS improvement through better customer experience. Enter your customer base metrics, current and target NPS, and sensitivity assumptions.',
+      target: '#mod-nps',
+      module: 'nps',
+    },
+    {
+      title: 'AI Centralization',
+      desc: 'Compare the cost of your current fragmented AI tool stack against a consolidated DevRev platform. Enter pricing and quantities for each tool you currently use.',
+      target: '#mod-ai',
+      module: 'ai',
+    },
+    {
+      title: 'Your Results',
+      desc: 'Your benefits analysis is complete! Review the summary below. You can export the results using the PDF, XL, and MD buttons above, or scroll down to see detailed breakdowns for each category.',
+      target: '.fb',
+    },
+  ];
+
+  let wzCurrent = 0;
+  let wzActive = false;
+  let wzHighlighted = null;
+
+  function wzVisibleSteps() {
+    return wzSteps.filter(s => !s.module || enabled[s.module]);
+  }
+
+  function wzRenderDots() {
+    const dots = document.getElementById('wz-dots');
+    const steps = wzVisibleSteps();
+    dots.innerHTML = steps.map((_, i) =>
+      `<div class="wz-dot${i < wzCurrent ? ' done' : ''}${i === wzCurrent ? ' active' : ''}"></div>`
+    ).join('');
+  }
+
+  function wzGoTo(idx) {
+    const steps = wzVisibleSteps();
+    if (idx < 0 || idx >= steps.length) return;
+    wzCurrent = idx;
+    const step = steps[idx];
+
+    // Update panel content
+    document.getElementById('wz-step-label').textContent = `Step ${idx + 1} of ${steps.length}`;
+    document.getElementById('wz-title').textContent = step.title;
+    document.getElementById('wz-desc').textContent = step.desc;
+    document.getElementById('wz-progress-fill').style.width = ((idx + 1) / steps.length * 100) + '%';
+
+    // Nav buttons
+    const backBtn = document.getElementById('wz-back');
+    const nextBtn = document.getElementById('wz-next');
+    backBtn.disabled = idx === 0;
+    if (idx === steps.length - 1) {
+      nextBtn.textContent = 'Finish ✓';
+    } else {
+      nextBtn.textContent = 'Next →';
+    }
+
+    wzRenderDots();
+
+    // Highlight target
+    if (wzHighlighted) wzHighlighted.classList.remove('wz-highlight');
+    const target = document.querySelector(step.target);
+    if (target) {
+      target.classList.add('wz-highlight');
+      wzHighlighted = target;
+      // If module card is disabled, still show it temporarily for the wizard
+      if (step.module && !enabled[step.module]) {
+        target.classList.remove('off');
+      }
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    }
+  }
+
+  function wzStart() {
+    wzActive = true;
+    wzCurrent = 0;
+    document.getElementById('wz-overlay').classList.add('active');
+    document.getElementById('wz-panel').classList.add('active');
+    document.body.style.overflow = '';
+    wzGoTo(0);
+  }
+
+  function wzEnd() {
+    wzActive = false;
+    document.getElementById('wz-overlay').classList.remove('active');
+    document.getElementById('wz-panel').classList.remove('active');
+    if (wzHighlighted) {
+      wzHighlighted.classList.remove('wz-highlight');
+      wzHighlighted = null;
+    }
+    applyToggles();
+    recompute();
+  }
+
+  function setModeUI(mode) {
+    document.getElementById('mode-manual').classList.toggle('active', mode === 'manual');
+    document.getElementById('mode-wizard').classList.toggle('active', mode === 'wizard');
+  }
+
+  document.getElementById('mode-wizard').addEventListener('click', () => {
+    setModeUI('wizard');
+    wzStart();
+  });
+  document.getElementById('mode-manual').addEventListener('click', () => {
+    if (wzActive) wzEnd();
+    setModeUI('manual');
+  });
+  document.getElementById('wz-close').addEventListener('click', () => {
+    wzEnd();
+    setModeUI('manual');
+  });
+  document.getElementById('wz-back').addEventListener('click', () => wzGoTo(wzCurrent - 1));
+  document.getElementById('wz-next').addEventListener('click', () => {
+    const steps = wzVisibleSteps();
+    if (wzCurrent >= steps.length - 1) {
+      wzEnd();
+      setModeUI('manual');
+    } else {
+      wzGoTo(wzCurrent + 1);
+    }
+  });
+
+  // Allow keyboard navigation in wizard
+  document.addEventListener('keydown', (ev) => {
+    if (!wzActive) return;
+    if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'SELECT') return;
+    if (ev.key === 'ArrowRight' || ev.key === 'Enter') {
+      ev.preventDefault();
+      const steps = wzVisibleSteps();
+      if (wzCurrent >= steps.length - 1) { wzEnd(); setModeUI('manual'); }
+      else wzGoTo(wzCurrent + 1);
+    } else if (ev.key === 'ArrowLeft') {
+      ev.preventDefault();
+      wzGoTo(wzCurrent - 1);
+    } else if (ev.key === 'Escape') {
+      ev.preventDefault();
+      wzEnd();
+      setModeUI('manual');
+    }
+  });
+
+  currency = document.getElementById('currency-select').value;
+  discountRate = (parseFloat(document.getElementById('discount-rate').value) || 0) / 100;
+  applyToggles();
+  recompute();
+</script>
+</body>
+</html>
